@@ -235,6 +235,14 @@
             gap: 10px;
             justify-content: flex-end;
         }
+        footer {
+        text-align: center;
+        margin-top: 30px;
+        padding: 15px;
+        color: #64748b;
+        border-top: 1px solid #e2e8f0;
+        font-size: 0.9rem;
+        }
     </style>
     <!-- Manifest para PWA (se crea dinámicamente) -->
     <link rel="manifest" href="data:application/manifest+json,{
@@ -330,6 +338,7 @@
             </label>
         </div>
     </div>
+    <footer>© <span id="currentYear"></span> John Jáner M.G - <a href="http://jmartech.com">jmartech.com</a>  </footer>
 </div>
 
 <script>
@@ -821,6 +830,7 @@
         loadData();
         renderAll();
     })();
+    document.getElementById('currentYear').textContent = new Date().getFullYear();
 </script>
 
 <!-- Service Worker embebido (si no quieres archivo externo, puedes ponerlo inline pero requiere HTTPS en producción) -->
