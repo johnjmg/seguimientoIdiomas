@@ -243,6 +243,12 @@
         border-top: 1px solid #e2e8f0;
         font-size: 0.9rem;
         }
+
+        .checkbox-marked {
+        outline: 2px solid #3b82f6;
+        outline-offset: -2px;
+        border-radius: 8px;
+        }
     </style>
     <!-- Manifest para PWA (se crea dinámicamente) -->
     <link rel="manifest" href="data:application/manifest+json,{
@@ -471,7 +477,8 @@
                     const cell = entry.days[day]?.[idx] || { checked: false, time: 0 };
                     totalAct += cell.time || 0;
                     const goalMet = (cell.time >= act.dailyGoal) ? 'goal-met' : '';
-                    row += `<td class="checkbox-cell ${goalMet}">`;
+                    const markedClass = cell.checked ? 'checkbox-marked' : '';
+                    row += `<td class="checkbox-cell ${goalMet} ${markedClass}">`;
                     row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${idx}" ${cell.checked ? 'checked' : ''}>`;
                     row += `<input type="number" class="time-input" data-day="${day}" data-act="${idx}" value="${cell.time || 0}" min="0" step="1">`;
                     row += `</td>`;
@@ -522,8 +529,11 @@
             const lang = languages.find(l => l.id === currentLangId);
             const unit = lang.timeUnit || 'min';
 
-            // Recolectar todos los días con datos de este idioma
-            let dailyTotals = []; // { date, total }
+            // Recolectar datos de todos los días de este idioma
+            let dailyTotals = [];
+            let totalChecked = 0;
+            let daysWithChecked = new Set();
+
             Object.keys(entries).forEach(key => {
                 if (key.startsWith(currentLangId + '_')) {
                     const entry = entries[key];
@@ -531,8 +541,16 @@
                     const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
                     Object.entries(entry.days).forEach(([dayName, acts]) => {
                         const total = acts.reduce((acc, a) => acc + (a?.time || 0), 0);
+                        const anyChecked = acts.some(a => a?.checked);
+                        if (anyChecked) {
+                            const dayOffset = daysMap[dayName];
+                            const d = new Date(weekStart + 'T12:00:00');
+                            d.setDate(d.getDate() + dayOffset);
+                            const dateStr = d.toISOString().split('T')[0];
+                            daysWithChecked.add(dateStr);
+                        }
+                        acts.forEach(a => { if (a?.checked) totalChecked++; });
                         if (total > 0) {
-                            // calcular fecha real
                             const dayOffset = daysMap[dayName];
                             const d = new Date(weekStart + 'T12:00:00');
                             d.setDate(d.getDate() + dayOffset);
@@ -542,12 +560,13 @@
                     });
                 }
             });
+
             dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
 
             // Promedio diario
             const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
 
-            // Rachas: días consecutivos con algún registro
+            // Rachas (basadas en tiempo, como antes)
             let currentStreak = 0, maxStreak = 0;
             if (dailyTotals.length) {
                 let streak = 1;
@@ -562,7 +581,6 @@
                     }
                 }
                 maxStreak = Math.max(maxStreak, streak);
-                // racha actual: desde hoy hacia atrás
                 const today = new Date().toISOString().split('T')[0];
                 const todayIndex = dailyTotals.findIndex(d => d.date === today);
                 if (todayIndex >= 0) {
@@ -574,23 +592,25 @@
                         else break;
                     }
                     currentStreak = count;
-                } else {
-                    currentStreak = 0;
-                }
+                } else currentStreak = 0;
             }
 
-            // Meta diaria global (suma de metas de actividades)
+            // Meta diaria global
             const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
-
-            // Porcentaje de días que alcanzaron la meta
             const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
             const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
+
+            // Estadísticas nuevas de checkboxes
+            const totalCheckedDisplay = totalChecked;
+            const daysWithCheckedDisplay = daysWithChecked.size;
 
             const statsHtml = `
                 <div class="stat-item"><span class="stat-value">${avgDaily}</span><br>Promedio diario (${unit})</div>
                 <div class="stat-item"><span class="stat-value">${currentStreak}</span><br>Racha actual (días)</div>
                 <div class="stat-item"><span class="stat-value">${maxStreak}</span><br>Máxima racha</div>
                 <div class="stat-item"><span class="stat-value">${pctMeta}%</span><br>Días con meta</div>
+                <div class="stat-item"><span class="stat-value">${totalCheckedDisplay}</span><br>Actividades marcadas</div>
+                <div class="stat-item"><span class="stat-value">${daysWithCheckedDisplay}</span><br>Días con marca</div>
             `;
             document.getElementById('statsContainer').innerHTML = statsHtml;
         }
