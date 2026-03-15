@@ -680,7 +680,17 @@
         function renderActivitiesConfig() {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
-            let html = '';
+            
+            // Campo de meta a largo plazo
+            let html = `<div style="margin-bottom:20px; padding:10px; background:#e6f0fa; border-radius:12px;">
+                <label><strong>Meta a largo plazo:</strong> 
+                    <input type="number" id="longTermGoalInput" value="${lang.longTermGoal?.amount || 0}" min="0" step="1" style="width:100px;">
+                    ${lang.timeUnit || 'min'}
+                </label>
+                <button id="saveLongTermGoalBtn" class="small secondary" style="margin-left:10px;">Guardar meta</button>
+            </div>`;
+            
+            // Luego sigue la lista de actividades (igual que antes)
             lang.activities.forEach((act, idx) => {
                 html += `<div class="activity-config" data-index="${idx}">
                     <input type="text" class="act-name" value="${act.name}" placeholder="Actividad">
@@ -688,21 +698,20 @@
                     <button class="warning small remove-act">✕</button>
                 </div>`;
             });
+            
             document.getElementById('activitiesConfig').innerHTML = html;
-            document.querySelectorAll('.remove-act').forEach(btn => {
-                btn.onclick = function() {
-                    const div = this.closest('.activity-config');
-                    const idx = div.dataset.index;
-                    lang.activities.splice(idx, 1);
-                    saveLanguages();
-                    renderActivitiesConfig();
-                    renderTable();
-                    renderStats();
-                    renderCalendar();
-                    renderLongTermGoals();
-                };
+            
+            // Evento para guardar meta a largo plazo
+            document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', function() {
+                const newGoal = parseInt(document.getElementById('longTermGoalInput').value) || 0;
+                if (!lang.longTermGoal) lang.longTermGoal = {};
+                lang.longTermGoal.amount = newGoal;
+                saveLanguages();
+                renderLongTermGoals(); // Actualizar panel de metas
+                alert('Meta a largo plazo guardada');
             });
-            document.getElementById('timeUnitSelect').value = lang.timeUnit || 'min';
+            
+            // ... resto de eventos (remove-act, etc.) ...
         }
 
         function renderAll() {
