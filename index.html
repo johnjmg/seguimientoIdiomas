@@ -655,6 +655,7 @@
         function renderLongTermGoals() {
             let html = '';
             languages.forEach(lang => {
+                // Calcular total acumulado en la unidad del idioma (min o h)
                 let totalAcum = 0;
                 Object.keys(entries).forEach(key => {
                     if (key.startsWith(lang.id + '_')) {
@@ -664,12 +665,25 @@
                         });
                     }
                 });
-                const meta = lang.longTermGoal?.amount || 0;
-                const unidad = lang.timeUnit || 'min';
-                const porcentaje = meta > 0 ? Math.min(100, (totalAcum / meta) * 100) : 0;
+
+                // Obtener meta y su unidad (si no existe, usar la del idioma)
+                const metaObj = lang.longTermGoal || { amount: 0, unit: lang.timeUnit };
+                const metaValor = metaObj.amount || 0;
+                const metaUnidad = metaObj.unit || lang.timeUnit;
+
+                // Convertir el total acumulado a la unidad de la meta
+                let totalConvertido = totalAcum;
+                if (lang.timeUnit === 'min' && metaUnidad === 'h') {
+                    totalConvertido = totalAcum / 60;
+                } else if (lang.timeUnit === 'h' && metaUnidad === 'min') {
+                    totalConvertido = totalAcum * 60;
+                }
+
+                const porcentaje = metaValor > 0 ? Math.min(100, (totalConvertido / metaValor) * 100) : 0;
+
                 html += `<div class="goal-card">
                     <h4>${lang.name}</h4>
-                    <p>${totalAcum} ${unidad} / ${meta} ${unidad}</p>
+                    <p>${totalConvertido.toFixed(1)} ${metaUnidad} / ${metaValor} ${metaUnidad}</p>
                     <div class="progress-bar"><div class="progress-fill" style="width:${porcentaje}%;">${porcentaje.toFixed(1)}%</div></div>
                 </div>`;
             });
@@ -681,16 +695,19 @@
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
             
-            // Campo de meta a largo plazo
+            // Campo de meta a largo plazo con selector de unidad
             let html = `<div style="margin-bottom:20px; padding:10px; background:#e6f0fa; border-radius:12px;">
                 <label><strong>Meta a largo plazo:</strong> 
                     <input type="number" id="longTermGoalInput" value="${lang.longTermGoal?.amount || 0}" min="0" step="1" style="width:100px;">
-                    ${lang.timeUnit || 'min'}
+                    <select id="longTermGoalUnit">
+                        <option value="min" ${lang.longTermGoal?.unit === 'min' ? 'selected' : ''}>Minutos</option>
+                        <option value="h" ${lang.longTermGoal?.unit === 'h' ? 'selected' : ''}>Horas</option>
+                    </select>
                 </label>
                 <button id="saveLongTermGoalBtn" class="small secondary" style="margin-left:10px;">Guardar meta</button>
             </div>`;
             
-            // Luego sigue la lista de actividades (igual que antes)
+            // Lista de actividades
             lang.activities.forEach((act, idx) => {
                 html += `<div class="activity-config" data-index="${idx}">
                     <input type="text" class="act-name" value="${act.name}" placeholder="Actividad">
@@ -700,18 +717,30 @@
             });
             
             document.getElementById('activitiesConfig').innerHTML = html;
-            
+
             // Evento para guardar meta a largo plazo
             document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', function() {
-                const newGoal = parseInt(document.getElementById('longTermGoalInput').value) || 0;
-                if (!lang.longTermGoal) lang.longTermGoal = {};
-                lang.longTermGoal.amount = newGoal;
+                const newAmount = parseInt(document.getElementById('longTermGoalInput').value) || 0;
+                const newUnit = document.getElementById('longTermGoalUnit').value;
+                lang.longTermGoal = { amount: newAmount, unit: newUnit };
                 saveLanguages();
-                renderLongTermGoals(); // Actualizar panel de metas
+                renderLongTermGoals(); // <-- Esto actualiza el panel de metas
+                renderActivitiesConfig(); // Opcional: refresca la configuración para que el selector muestre la unidad guardada
                 alert('Meta a largo plazo guardada');
             });
-            
-            // ... resto de eventos (remove-act, etc.) ...
+
+            // Eventos para eliminar actividad
+            document.querySelectorAll('.remove-act').forEach(btn => {
+                btn.onclick = function() {
+                    const div = this.closest('.activity-config');
+                    const idx = div.dataset.index;
+                    lang.activities.splice(idx, 1);
+                    saveLanguages();
+                    renderActivitiesConfig();
+                    renderTable();
+                    renderLongTermGoals();
+                };
+            });
         }
 
         function renderAll() {
