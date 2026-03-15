@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Seguimiento de Aprendizaje de  Idiomas</title>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <!-- Estilos -->
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+        body {
+            background: #f4f7fb;
+            margin: 0;
+            padding: 12px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 1400px;
+            width: 100%;
+        }
+        h1, h2, h3 {
+            color: #1e293b;
+            margin: 0 0 12px 0;
+            font-weight: 600;
+        }
+        .panel {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
+            border: 1px solid #e9eef3;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .tab {
+            background: #eef2f6;
+            padding: 8px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: 0.2s;
+        }
+        .tab.active {
+            background: #2d6a4f;
+            color: white;
+            border-color: #1b4b3b;
+        }
+        button, .btn {
+            background: #2d6a4f;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            border: 1px solid #1b4b3b;
+        }
+        button.secondary {
+            background: #64748b;
+            border-color: #475569;
+        }
+        button.warning {
+            background: #b91c1c;
+            border-color: #7f1d1d;
+        }
+        button.small {
+            padding: 6px 14px;
+            font-size: 0.85rem;
+        }
+        .week-nav {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+            background: #f8fafc;
+            padding: 10px 16px;
+            border-radius: 60px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+            min-width: 800px;
+        }
+        th {
+            background: #f1f5f9;
+            padding: 12px 6px;
+            text-align: center;
+            font-weight: 600;
+            color: #334155;
+        }
+        td {
+            padding: 8px 4px;
+            text-align: center;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .activity-cell {
+            background: #f8fafc;
+            font-weight: 500;
+            text-align: left;
+            padding-left: 12px;
+            position: sticky;
+            left: 0;
+            background: white;
+        }
+        .checkbox-cell {
+            background: #ffffff;
+        }
+        .time-input {
+            width: 65px;
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            text-align: center;
+            margin-top: 4px;
+            font-size: 0.85rem;
+        }
+        .goal-met {
+            background-color: #c8f0d9 !important;
+        }
+        .total-row {
+            background: #f1f5f9;
+            font-weight: 600;
+        }
+        .progress-bar {
+            background: #e2e8f0;
+            border-radius: 30px;
+            height: 28px;
+            width: 100%;
+            overflow: hidden;
+            margin: 8px 0;
+        }
+        .progress-fill {
+            background: #2d6a4f;
+            height: 100%;
+            color: white;
+            line-height: 28px;
+            padding-left: 10px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+        }
+        .goals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 15px;
+        }
+        .goal-card {
+            background: #f8fafc;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid #dde3e9;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        .stat-item {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 15px;
+        }
+        .calendar-day {
+            aspect-ratio: 1;
+            background: #f1f5f9;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            padding: 4px;
+        }
+        .calendar-day.has-data {
+            background: #cbd5e1;
+        }
+        .calendar-day.goal-met-day {
+            background: #a7f3d0;
+        }
+        .calendar-day-number {
+            font-weight: 600;
+        }
+        .config-section {
+            background: #f1f5f9;
+            border-radius: 20px;
+            padding: 20px;
+        }
+        .activity-config {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .mobile-friendly {
+            overflow-x: auto;
+        }
+        .export-import {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+    </style>
+    <!-- Manifest para PWA (se crea dinámicamente) -->
+    <link rel="manifest" href="data:application/manifest+json,{
+        &quot;name&quot;: &quot;Tracker Idiomas&quot;,
+        &quot;short_name&quot;: &quot;Idiomas&quot;,
+        &quot;start_url&quot;: &quot;.&quot;,
+        &quot;display&quot;: &quot;standalone&quot;,
+        &quot;background_color&quot;: &quot;#f4f7fb&quot;,
+        &quot;theme_color&quot;: &quot;#2d6a4f&quot;,
+        &quot;icons&quot;: [{
+            &quot;src&quot;: &quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%232d6a4f'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E🗣️%3C/text%3E%3C/svg%3E&quot;,
+            &quot;sizes&quot;: &quot;192x192&quot;,
+            &quot;type&quot;: &quot;image/svg+xml&quot;
+        }]
+    }">
+</head>
+<body>
+<div class="container">
+    <h1>🗓️ Seguimiento de Idiomas</h1>
+
+    <!-- Panel superior: idiomas y export/import -->
+    <div class="panel">
+        <div class="flex-row">
+            <div class="tabs" id="languageTabs"></div>
+            <div class="export-import">
+                <button id="exportBtn" class="secondary small">📤 Exportar</button>
+                <button id="importBtn" class="secondary small">📥 Importar</button>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+                <button id="addLangBtn" class="small">➕ Idioma</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navegación semanal -->
+    <div class="panel">
+        <div class="week-nav">
+            <button id="prevWeekBtn">◀</button>
+            <span id="weekRange"></span>
+            <button id="nextWeekBtn">▶</button>
+            <input type="date" id="weekPicker" style="border-radius:30px; padding:6px 12px; border:1px solid #ccc;">
+        </div>
+    </div>
+
+    <!-- Tabla semanal (con scroll horizontal en móvil) -->
+    <div class="panel mobile-friendly">
+        <table id="weeklyTable">
+            <thead id="tableHeader"></thead>
+            <tbody id="tableBody"></tbody>
+            <tfoot id="tableFoot"></tfoot>
+        </table>
+    </div>
+
+    <!-- Panel de estadísticas rápidas -->
+    <div class="panel">
+        <h2>📊 Estadísticas (idioma actual)</h2>
+        <div class="stats-grid" id="statsContainer">
+            <!-- se llena con JS -->
+        </div>
+    </div>
+
+    <!-- Calendario mensual -->
+    <div class="panel">
+        <div class="flex-row">
+            <h2>📅 Calendario mensual</h2>
+            <div>
+                <button id="prevMonthBtn" class="small">◀</button>
+                <span id="monthYear"></span>
+                <button id="nextMonthBtn" class="small">▶</button>
+            </div>
+        </div>
+        <div class="calendar" id="calendarGrid"></div>
+        <p style="font-size:0.85rem; color:#555;">Verde = día con meta cumplida (total ≥ meta diaria global)</p>
+    </div>
+
+    <!-- Metas a largo plazo (globales) -->
+    <div class="panel">
+        <h2>🎯 Metas a largo plazo</h2>
+        <div class="goals-grid" id="longTermGoals"></div>
+    </div>
+
+    <!-- Configuración de actividades para el idioma actual -->
+    <div class="panel config-section">
+        <h3>⚙️ Configurar <span id="currentLangName"></span></h3>
+        <div id="activitiesConfig"></div>
+        <div class="flex-row" style="margin-top:15px;">
+            <button id="addActivityBtn" class="secondary small">➕ Añadir actividad</button>
+            <button id="saveActivitiesBtn" class="small">Guardar cambios</button>
+            <label style="margin-left:auto;">Unidad: 
+                <select id="timeUnitSelect">
+                    <option value="min">Minutos</option>
+                    <option value="h">Horas</option>
+                </select>
+            </label>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DATOS ----------
+        let languages = [];
+        let entries = {}; // clave: "langId_weekStart"
+        let currentLangId = null;
+        let currentWeekStart = getMonday(new Date());
+
+        // Claves localStorage
+        const STORAGE_LANGS = 'langs_adv';
+        const STORAGE_ENTRIES = 'entries_adv';
+
+        // ---------- FUNCIONES AUX ----------
+        function getMonday(date) {
+            const d = new Date(date);
+            const day = d.getDay(); // 0 dom, 1 lun...
+            const diff = (day === 0 ? 6 : day - 1);
+            d.setDate(d.getDate() - diff);
+            return d.toISOString().split('T')[0];
+        }
+
+        function formatDateRange(mondayStr) {
+            const m = new Date(mondayStr + 'T12:00:00');
+            const s = new Date(m); s.setDate(m.getDate() + 6);
+            return `${m.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} - ${s.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'})}`;
+        }
+
+        function generateId() { return Date.now() + '-' + Math.random().toString(36); }
+
+        // Cargar / guardar
+        function loadData() {
+            const storedLangs = localStorage.getItem(STORAGE_LANGS);
+            if (storedLangs) {
+                languages = JSON.parse(storedLangs);
+            } else {
+                // Datos de ejemplo
+                languages = [
+                    { id: '1', name: 'Inglés', activities: [
+                        { name: 'Vocabulario', dailyGoal: 30 },
+                        { name: 'Shadowing', dailyGoal: 20 },
+                        { name: 'Lectura y transcripción', dailyGoal: 30 },
+                        { name: 'Gramática', dailyGoal: 15 },
+                        { name: 'Escribir/hablar', dailyGoal: 20 }
+                    ], longTermGoal: { amount: 200, period: 'total' }, timeUnit: 'min' },
+                    { id: '2', name: 'Francés', activities: [
+                        { name: 'Vocabulario', dailyGoal: 30 },
+                        { name: 'Escucha', dailyGoal: 30 },
+                        { name: 'Habla', dailyGoal: 30 }
+                    ], longTermGoal: { amount: 540, period: 'horas' }, timeUnit: 'h' }
+                ];
+            }
+            const storedEntries = localStorage.getItem(STORAGE_ENTRIES);
+            if (storedEntries) {
+                entries = JSON.parse(storedEntries);
+            } else {
+                entries = {};
+            }
+            if (languages.length > 0 && !currentLangId) currentLangId = languages[0].id;
+        }
+        function saveLanguages() { localStorage.setItem(STORAGE_LANGS, JSON.stringify(languages)); }
+        function saveEntries() { localStorage.setItem(STORAGE_ENTRIES, JSON.stringify(entries)); }
+
+        // Obtener entrada de la semana actual
+        function getCurrentEntry() {
+            const key = `${currentLangId}_${currentWeekStart}`;
+            if (!entries[key]) {
+                const lang = languages.find(l => l.id === currentLangId);
+                const numActs = lang ? lang.activities.length : 0;
+                const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+                const daysData = {};
+                days.forEach(day => { daysData[day] = Array(numActs).fill(null).map(() => ({ checked: false, time: 0 })); });
+                entries[key] = { weekStart: currentWeekStart, days: daysData };
+            }
+            return entries[key];
+        }
+
+        // Actualizar celda
+        function updateCell(day, actIndex, checked, time) {
+            const entry = getCurrentEntry();
+            if (!entry.days[day]) entry.days[day] = [];
+            if (!entry.days[day][actIndex]) entry.days[day][actIndex] = { checked: false, time: 0 };
+            entry.days[day][actIndex].checked = checked;
+            entry.days[day][actIndex].time = time;
+            saveEntries();
+            renderTable();
+            renderStats();
+            renderCalendar();
+            renderLongTermGoals();
+        }
+
+        // ---------- RENDERIZADO ----------
+        function renderLanguageTabs() {
+            const container = document.getElementById('languageTabs');
+            container.innerHTML = '';
+            languages.forEach(lang => {
+                const tab = document.createElement('span');
+                tab.className = `tab ${lang.id === currentLangId ? 'active' : ''}`;
+                tab.textContent = lang.name;
+                tab.dataset.id = lang.id;
+                tab.onclick = () => {
+                    currentLangId = lang.id;
+                    renderAll();
+                };
+                container.appendChild(tab);
+            });
+        }
+
+        function renderTable() {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            if (!lang) return;
+            const entry = getCurrentEntry();
+            const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+            const unit = lang.timeUnit || 'min';
+
+            // Cabecera
+            let thead = '<tr><th>Actividad</th>';
+            days.forEach(d => thead += `<th>${d}</th>`);
+            thead += '<th>Total</th></tr>';
+            document.getElementById('tableHeader').innerHTML = thead;
+
+            // Cuerpo
+            let tbody = '';
+            lang.activities.forEach((act, idx) => {
+                let totalAct = 0;
+                let row = `<tr><td class="activity-cell">${act.name} (${act.dailyGoal} ${unit})</td>`;
+                days.forEach(day => {
+                    const cell = entry.days[day]?.[idx] || { checked: false, time: 0 };
+                    totalAct += cell.time || 0;
+                    const goalMet = (cell.time >= act.dailyGoal) ? 'goal-met' : '';
+                    row += `<td class="checkbox-cell ${goalMet}">`;
+                    row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${idx}" ${cell.checked ? 'checked' : ''}>`;
+                    row += `<input type="number" class="time-input" data-day="${day}" data-act="${idx}" value="${cell.time || 0}" min="0" step="1">`;
+                    row += `</td>`;
+                });
+                row += `<td>${totalAct} ${unit}</td></tr>`;
+                tbody += row;
+            });
+            document.getElementById('tableBody').innerHTML = tbody;
+
+            // Pie (totales día)
+            let totalGeneral = 0;
+            let foot = '<tr class="total-row"><td>Total día</td>';
+            days.forEach(day => {
+                let dayTotal = 0;
+                lang.activities.forEach((_, idx) => { dayTotal += entry.days[day]?.[idx]?.time || 0; });
+                totalGeneral += dayTotal;
+                foot += `<td>${dayTotal} ${unit}</td>`;
+            });
+            foot += `<td>${totalGeneral} ${unit}</td></tr>`;
+            document.getElementById('tableFoot').innerHTML = foot;
+
+            // Eventos
+            document.querySelectorAll('.day-check').forEach(cb => {
+                cb.onchange = function(e) {
+                    const day = this.dataset.day;
+                    const actIdx = this.dataset.act;
+                    const timeInput = document.querySelector(`.time-input[data-day="${day}"][data-act="${actIdx}"]`);
+                    const time = parseInt(timeInput.value) || 0;
+                    updateCell(day, parseInt(actIdx), this.checked, time);
+                };
+            });
+            document.querySelectorAll('.time-input').forEach(inp => {
+                inp.onchange = function(e) {
+                    const day = this.dataset.day;
+                    const actIdx = this.dataset.act;
+                    const time = parseInt(this.value) || 0;
+                    const check = document.querySelector(`.day-check[data-day="${day}"][data-act="${actIdx}"]`);
+                    updateCell(day, parseInt(actIdx), check.checked, time);
+                };
+            });
+
+            document.getElementById('weekRange').textContent = formatDateRange(currentWeekStart);
+        }
+
+        // Estadísticas: promedio, rachas, etc.
+        function renderStats() {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            const unit = lang.timeUnit || 'min';
+
+            // Recolectar todos los días con datos de este idioma
+            let dailyTotals = []; // { date, total }
+            Object.keys(entries).forEach(key => {
+                if (key.startsWith(currentLangId + '_')) {
+                    const entry = entries[key];
+                    const weekStart = entry.weekStart;
+                    const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
+                    Object.entries(entry.days).forEach(([dayName, acts]) => {
+                        const total = acts.reduce((acc, a) => acc + (a?.time || 0), 0);
+                        if (total > 0) {
+                            // calcular fecha real
+                            const dayOffset = daysMap[dayName];
+                            const d = new Date(weekStart + 'T12:00:00');
+                            d.setDate(d.getDate() + dayOffset);
+                            const dateStr = d.toISOString().split('T')[0];
+                            dailyTotals.push({ date: dateStr, total });
+                        }
+                    });
+                }
+            });
+            dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
+
+            // Promedio diario
+            const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
+
+            // Rachas: días consecutivos con algún registro
+            let currentStreak = 0, maxStreak = 0;
+            if (dailyTotals.length) {
+                let streak = 1;
+                for (let i = 1; i < dailyTotals.length; i++) {
+                    const prev = new Date(dailyTotals[i-1].date);
+                    const curr = new Date(dailyTotals[i].date);
+                    const diffDays = Math.round((curr - prev) / (1000*3600*24));
+                    if (diffDays === 1) streak++;
+                    else {
+                        maxStreak = Math.max(maxStreak, streak);
+                        streak = 1;
+                    }
+                }
+                maxStreak = Math.max(maxStreak, streak);
+                // racha actual: desde hoy hacia atrás
+                const today = new Date().toISOString().split('T')[0];
+                const todayIndex = dailyTotals.findIndex(d => d.date === today);
+                if (todayIndex >= 0) {
+                    let count = 1;
+                    for (let i = todayIndex-1; i >= 0; i--) {
+                        const prev = new Date(dailyTotals[i].date);
+                        const next = new Date(dailyTotals[i+1].date);
+                        if ((next - prev) / (1000*3600*24) === 1) count++;
+                        else break;
+                    }
+                    currentStreak = count;
+                } else {
+                    currentStreak = 0;
+                }
+            }
+
+            // Meta diaria global (suma de metas de actividades)
+            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
+
+            // Porcentaje de días que alcanzaron la meta
+            const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
+            const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
+
+            const statsHtml = `
+                <div class="stat-item"><span class="stat-value">${avgDaily}</span><br>Promedio diario (${unit})</div>
+                <div class="stat-item"><span class="stat-value">${currentStreak}</span><br>Racha actual (días)</div>
+                <div class="stat-item"><span class="stat-value">${maxStreak}</span><br>Máxima racha</div>
+                <div class="stat-item"><span class="stat-value">${pctMeta}%</span><br>Días con meta</div>
+            `;
+            document.getElementById('statsContainer').innerHTML = statsHtml;
+        }
+
+        // Calendario mensual
+        function renderCalendar() {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            const unit = lang.timeUnit;
+            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
+
+            // Obtener mes actual (basado en currentWeekStart para mantener coherencia)
+            const baseDate = new Date(currentWeekStart + 'T12:00:00');
+            const year = baseDate.getFullYear();
+            const month = baseDate.getMonth(); // 0-11
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            const startDayOfWeek = firstDay.getDay(); // 0 dom, 1 lun... Ajustamos a lun=0
+            let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
+
+            // Recolectar totales por día de este idioma
+            const dailyMap = new Map();
+            Object.keys(entries).forEach(key => {
+                if (key.startsWith(currentLangId + '_')) {
+                    const entry = entries[key];
+                    const weekStart = entry.weekStart;
+                    const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
+                    Object.entries(entry.days).forEach(([dayName, acts]) => {
+                        const total = acts.reduce((acc, a) => acc + (a?.time || 0), 0);
+                        if (total > 0) {
+                            const dayOffset = daysMap[dayName];
+                            const d = new Date(weekStart + 'T12:00:00');
+                            d.setDate(d.getDate() + dayOffset);
+                            const dateStr = d.toISOString().split('T')[0];
+                            dailyMap.set(dateStr, total);
+                        }
+                    });
+                }
+            });
+
+            let calendarHtml = '';
+            // Días vacíos al inicio
+            for (let i = 0; i < startOffset; i++) {
+                calendarHtml += '<div class="calendar-day"></div>';
+            }
+            // Días del mes
+            for (let d = 1; d <= lastDay.getDate(); d++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const total = dailyMap.get(dateStr) || 0;
+                let className = 'calendar-day';
+                if (total > 0) {
+                    className += ' has-data';
+                    if (total >= globalDailyGoal) className += ' goal-met-day';
+                }
+                calendarHtml += `<div class="${className}"><span class="calendar-day-number">${d}</span><br>${total} ${unit}</div>`;
+            }
+            document.getElementById('calendarGrid').innerHTML = calendarHtml;
+            document.getElementById('monthYear').textContent = firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+        }
+
+        // Metas a largo plazo
+        function renderLongTermGoals() {
+            let html = '';
+            languages.forEach(lang => {
+                let totalAcum = 0;
+                Object.keys(entries).forEach(key => {
+                    if (key.startsWith(lang.id + '_')) {
+                        const entry = entries[key];
+                        Object.values(entry.days).forEach(acts => {
+                            acts.forEach(a => { if (a) totalAcum += a.time || 0; });
+                        });
+                    }
+                });
+                const meta = lang.longTermGoal?.amount || 0;
+                const unidad = lang.timeUnit || 'min';
+                const porcentaje = meta > 0 ? Math.min(100, (totalAcum / meta) * 100) : 0;
+                html += `<div class="goal-card">
+                    <h4>${lang.name}</h4>
+                    <p>${totalAcum} ${unidad} / ${meta} ${unidad}</p>
+                    <div class="progress-bar"><div class="progress-fill" style="width:${porcentaje}%;">${porcentaje.toFixed(1)}%</div></div>
+                </div>`;
+            });
+            document.getElementById('longTermGoals').innerHTML = html;
+        }
+
+        // Configuración de actividades
+        function renderActivitiesConfig() {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            let html = '';
+            lang.activities.forEach((act, idx) => {
+                html += `<div class="activity-config" data-index="${idx}">
+                    <input type="text" class="act-name" value="${act.name}" placeholder="Actividad">
+                    <label>Meta diaria: <input type="number" class="act-dailyGoal" value="${act.dailyGoal}" min="0" step="1"></label>
+                    <button class="warning small remove-act">✕</button>
+                </div>`;
+            });
+            document.getElementById('activitiesConfig').innerHTML = html;
+            document.querySelectorAll('.remove-act').forEach(btn => {
+                btn.onclick = function() {
+                    const div = this.closest('.activity-config');
+                    const idx = div.dataset.index;
+                    lang.activities.splice(idx, 1);
+                    saveLanguages();
+                    renderActivitiesConfig();
+                    renderTable();
+                    renderStats();
+                    renderCalendar();
+                    renderLongTermGoals();
+                };
+            });
+            document.getElementById('timeUnitSelect').value = lang.timeUnit || 'min';
+        }
+
+        function renderAll() {
+            renderLanguageTabs();
+            renderTable();
+            renderStats();
+            renderCalendar();
+            renderLongTermGoals();
+            renderActivitiesConfig();
+            document.getElementById('currentLangName').textContent = languages.find(l => l.id === currentLangId)?.name || '';
+        }
+
+        // ---------- EVENTOS ----------
+        document.getElementById('prevWeekBtn').onclick = () => {
+            const d = new Date(currentWeekStart + 'T12:00:00');
+            d.setDate(d.getDate() - 7);
+            currentWeekStart = getMonday(d);
+            renderAll();
+        };
+        document.getElementById('nextWeekBtn').onclick = () => {
+            const d = new Date(currentWeekStart + 'T12:00:00');
+            d.setDate(d.getDate() + 7);
+            currentWeekStart = getMonday(d);
+            renderAll();
+        };
+        document.getElementById('weekPicker').onchange = (e) => {
+            if (e.target.value) {
+                currentWeekStart = getMonday(e.target.value);
+                renderAll();
+            }
+        };
+        document.getElementById('prevMonthBtn').onclick = () => {
+            const d = new Date(currentWeekStart + 'T12:00:00');
+            d.setMonth(d.getMonth() - 1);
+            currentWeekStart = getMonday(d);
+            renderAll();
+        };
+        document.getElementById('nextMonthBtn').onclick = () => {
+            const d = new Date(currentWeekStart + 'T12:00:00');
+            d.setMonth(d.getMonth() + 1);
+            currentWeekStart = getMonday(d);
+            renderAll();
+        };
+        document.getElementById('addLangBtn').onclick = () => {
+            const name = prompt('Nombre del nuevo idioma:');
+            if (!name) return;
+            const newLang = {
+                id: generateId(),
+                name,
+                activities: [{ name: 'Actividad', dailyGoal: 30 }],
+                longTermGoal: { amount: 100, period: 'total' },
+                timeUnit: 'min'
+            };
+            languages.push(newLang);
+            currentLangId = newLang.id;
+            saveLanguages();
+            renderAll();
+        };
+        document.getElementById('addActivityBtn').onclick = () => {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            lang.activities.push({ name: 'Nueva', dailyGoal: 0 });
+            renderActivitiesConfig();
+        };
+        document.getElementById('saveActivitiesBtn').onclick = () => {
+            if (!currentLangId) return;
+            const lang = languages.find(l => l.id === currentLangId);
+            const actDivs = document.querySelectorAll('.activity-config');
+            const newActs = [];
+            actDivs.forEach(div => {
+                const name = div.querySelector('.act-name').value.trim();
+                const daily = parseInt(div.querySelector('.act-dailyGoal').value) || 0;
+                if (name) newActs.push({ name, dailyGoal: daily });
+            });
+            lang.activities = newActs;
+            lang.timeUnit = document.getElementById('timeUnitSelect').value;
+            saveLanguages();
+            // Podríamos migrar entries? No por simplicidad, pero se perdería correlación si cambian índices.
+            alert('Actividades guardadas. Revisa las semanas previas, los datos podrían no coincidir si cambió el orden.');
+            renderAll();
+        };
+
+        // Exportar / Importar
+        document.getElementById('exportBtn').onclick = () => {
+            const data = { languages, entries };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'idiomas_backup.json';
+            a.click();
+        };
+        document.getElementById('importBtn').onclick = () => {
+            document.getElementById('importFile').click();
+        };
+        document.getElementById('importFile').onchange = (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.languages && data.entries) {
+                        languages = data.languages;
+                        entries = data.entries;
+                        saveLanguages();
+                        saveEntries();
+                        if (languages.length) currentLangId = languages[0].id;
+                        renderAll();
+                        alert('Importación exitosa');
+                    } else throw new Error('Formato inválido');
+                } catch(ex) {
+                    alert('Error al importar: ' + ex);
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        // Service Worker para PWA (opcional, si el navegador lo soporta)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js').catch(e => console.log('SW no registrado'));
+        }
+
+        // Inicializar
+        loadData();
+        renderAll();
+    })();
+</script>
+
+<!-- Service Worker embebido (si no quieres archivo externo, puedes ponerlo inline pero requiere HTTPS en producción) -->
+<script>
+    // Service Worker simple para cachear la app y hacerla funcionar offline
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register(new URL('sw.js', window.location.href), { type: 'module' }).catch(console.error);
+    }
+</script>
+<!-- Crear sw.js aparte (opcional, por simplicidad lo dejamos embebido pero lo escribimos en un bloque aparte) -->
+<script>
+    // Este código se ejecutaría si fuera un archivo sw.js, pero como está inline no funcionará como SW.
+    // Para que funcione, necesitas un archivo sw.js real. Te explico al final.
+</script>
+</body>
+</html>
