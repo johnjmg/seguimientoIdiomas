@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>Seguimiento de Aprendizaje de  Idiomas</title>
-    <!-- Chart.js -->
+    <title>Seguimiento de Aprendizaje de Idiomas</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Estilos -->
     <style>
         * {
             box-sizing: border-box;
@@ -84,6 +83,9 @@
         button.warning {
             background: #b91c1c;
             border-color: #7f1d1d;
+        }
+        button.warning:hover {
+            background: #991b1b;
         }
         button.small {
             padding: 6px 14px;
@@ -226,6 +228,14 @@
             align-items: center;
             margin-bottom: 10px;
             flex-wrap: wrap;
+            background: white;
+            padding: 8px 12px;
+            border-radius: 40px;
+        }
+        .activity-config.archived {
+            opacity: 0.6;
+            text-decoration: line-through;
+            background: #f1f5f9;
         }
         .mobile-friendly {
             overflow-x: auto;
@@ -236,29 +246,19 @@
             justify-content: flex-end;
         }
         footer {
-        text-align: center;
-        margin-top: 30px;
-        padding: 15px;
-        color: #64748b;
-        border-top: 1px solid #e2e8f0;
-        font-size: 0.9rem;
+            text-align: center;
+            margin-top: 30px;
+            padding: 15px;
+            color: #64748b;
+            border-top: 1px solid #e2e8f0;
+            font-size: 0.9rem;
         }
-
         .checkbox-marked {
-        outline: 2px solid #3b82f6;
-        outline-offset: -2px;
-        border-radius: 8px;
-        }
-
-        button.warning {
-        background: #b91c1c;
-        border-color: #7f1d1d;
-        }
-        button.warning:hover {
-            background: #991b1b;
+            outline: 2px solid #3b82f6;
+            outline-offset: -2px;
+            border-radius: 8px;
         }
     </style>
-    <!-- Manifest para PWA (se crea dinámicamente) -->
     <link rel="manifest" href="data:application/manifest+json,{
         &quot;name&quot;: &quot;Tracker Idiomas&quot;,
         &quot;short_name&quot;: &quot;Idiomas&quot;,
@@ -277,7 +277,6 @@
 <div class="container">
     <h1>🗓️ Seguimiento de Idiomas</h1>
 
-    <!-- Panel superior: idiomas y export/import -->
     <div class="panel">
         <div class="flex-row">
             <div class="tabs" id="languageTabs"></div>
@@ -291,17 +290,16 @@
         </div>
     </div>
 
-    <!-- Navegación semanal -->
     <div class="panel">
         <div class="week-nav">
             <button id="prevWeekBtn">◀</button>
             <span id="weekRange"></span>
             <button id="nextWeekBtn">▶</button>
             <input type="date" id="weekPicker" style="border-radius:30px; padding:6px 12px; border:1px solid #ccc;">
+            <button id="goToTodayBtn" class="small secondary">📅 Hoy</button>
         </div>
     </div>
 
-    <!-- Tabla semanal (con scroll horizontal en móvil) -->
     <div class="panel mobile-friendly">
         <table id="weeklyTable">
             <thead id="tableHeader"></thead>
@@ -310,15 +308,11 @@
         </table>
     </div>
 
-    <!-- Panel de estadísticas rápidas -->
     <div class="panel">
         <h2>📊 Estadísticas (idioma actual)</h2>
-        <div class="stats-grid" id="statsContainer">
-            <!-- se llena con JS -->
-        </div>
+        <div class="stats-grid" id="statsContainer"></div>
     </div>
 
-    <!-- Calendario mensual -->
     <div class="panel">
         <div class="flex-row">
             <h2>📅 Calendario mensual</h2>
@@ -332,13 +326,11 @@
         <p style="font-size:0.85rem; color:#555;">Verde = día con meta cumplida (total ≥ meta diaria global)</p>
     </div>
 
-    <!-- Metas a largo plazo (globales) -->
     <div class="panel">
         <h2>🎯 Metas a largo plazo</h2>
         <div class="goals-grid" id="longTermGoals"></div>
     </div>
 
-    <!-- Configuración de actividades para el idioma actual -->
     <div class="panel config-section">
         <h3>⚙️ Configurar <span id="currentLangName"></span></h3>
         <div id="activitiesConfig"></div>
@@ -353,25 +345,22 @@
             </label>
         </div>
     </div>
-    <footer>© <span id="currentYear"></span> John Jáner M.G - <a href="http://jmartech.com">jmartech.com</a>  </footer>
+    <footer>© <span id="currentYear"></span> John Jáner M.G - <a href="http://jmartech.com">jmartech.com</a></footer>
 </div>
 
 <script>
     (function() {
-        // ---------- DATOS ----------
         let languages = [];
-        let entries = {}; // clave: "langId_weekStart"
+        let entries = {};
         let currentLangId = null;
         let currentWeekStart = getMonday(new Date());
 
-        // Claves localStorage
         const STORAGE_LANGS = 'langs_adv';
         const STORAGE_ENTRIES = 'entries_adv';
 
-        // ---------- FUNCIONES AUX ----------
         function getMonday(date) {
             const d = new Date(date);
-            const day = d.getDay(); // 0 dom, 1 lun...
+            const day = d.getDay();
             const diff = (day === 0 ? 6 : day - 1);
             d.setDate(d.getDate() - diff);
             return d.toISOString().split('T')[0];
@@ -379,66 +368,93 @@
 
         function formatDateRange(mondayStr) {
             const m = new Date(mondayStr + 'T12:00:00');
-            const s = new Date(m); s.setDate(m.getDate() + 6);
+            const s = new Date(m);
+            s.setDate(m.getDate() + 6);
             return `${m.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} - ${s.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'})}`;
         }
 
         function generateId() { return Date.now() + '-' + Math.random().toString(36); }
 
-        // Cargar / guardar
         function loadData() {
             const storedLangs = localStorage.getItem(STORAGE_LANGS);
             if (storedLangs) {
                 languages = JSON.parse(storedLangs);
+                // Asegurar que cada actividad tenga la propiedad 'active' (true por defecto)
+                languages.forEach(lang => {
+                    if (lang.activities) {
+                        lang.activities.forEach(act => {
+                            if (act.active === undefined) act.active = true;
+                        });
+                    }
+                });
             } else {
-                // Datos de ejemplo
                 languages = [
                     { id: '1', name: 'Inglés', activities: [
-                        { name: 'Vocabulario', dailyGoal: 30 },
-                        { name: 'Shadowing', dailyGoal: 20 },
-                        { name: 'Lectura y transcripción', dailyGoal: 30 },
-                        { name: 'Gramática', dailyGoal: 15 },
-                        { name: 'Escribir/hablar', dailyGoal: 20 }
-                    ], longTermGoal: { amount: 200, period: 'total' }, timeUnit: 'min' },
+                        { name: 'Vocabulario', dailyGoal: 30, active: true },
+                        { name: 'Shadowing', dailyGoal: 20, active: true },
+                        { name: 'Lectura y transcripción', dailyGoal: 30, active: true },
+                        { name: 'Gramática', dailyGoal: 15, active: true },
+                        { name: 'Escribir/hablar', dailyGoal: 20, active: true }
+                    ], longTermGoal: { amount: 200, unit: 'min' }, timeUnit: 'min' },
                     { id: '2', name: 'Francés', activities: [
-                        { name: 'Vocabulario', dailyGoal: 30 },
-                        { name: 'Escucha', dailyGoal: 30 },
-                        { name: 'Habla', dailyGoal: 30 }
-                    ], longTermGoal: { amount: 540, period: 'horas' }, timeUnit: 'h' }
+                        { name: 'Vocabulario', dailyGoal: 30, active: true },
+                        { name: 'Escucha', dailyGoal: 30, active: true },
+                        { name: 'Habla', dailyGoal: 30, active: true }
+                    ], longTermGoal: { amount: 540, unit: 'h' }, timeUnit: 'h' }
                 ];
             }
             const storedEntries = localStorage.getItem(STORAGE_ENTRIES);
             if (storedEntries) {
                 entries = JSON.parse(storedEntries);
+                // Migración: si alguna entrada tiene arrays en lugar de objetos, convertir
+                for (let key in entries) {
+                    const entry = entries[key];
+                    if (entry.days) {
+                        for (let day in entry.days) {
+                            if (Array.isArray(entry.days[day])) {
+                                const oldArray = entry.days[day];
+                                const newObj = {};
+                                const langId = key.split('_')[0];
+                                const lang = languages.find(l => l.id === langId);
+                                if (lang && lang.activities) {
+                                    lang.activities.forEach((act, idx) => {
+                                        if (oldArray[idx]) {
+                                            newObj[act.name] = oldArray[idx];
+                                        }
+                                    });
+                                }
+                                entry.days[day] = newObj;
+                            }
+                        }
+                    }
+                }
+                saveEntries();
             } else {
                 entries = {};
             }
             if (languages.length > 0 && !currentLangId) currentLangId = languages[0].id;
         }
+
         function saveLanguages() { localStorage.setItem(STORAGE_LANGS, JSON.stringify(languages)); }
         function saveEntries() { localStorage.setItem(STORAGE_ENTRIES, JSON.stringify(entries)); }
 
-        // Obtener entrada de la semana actual
         function getCurrentEntry() {
             const key = `${currentLangId}_${currentWeekStart}`;
             if (!entries[key]) {
-                const lang = languages.find(l => l.id === currentLangId);
-                const numActs = lang ? lang.activities.length : 0;
                 const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
                 const daysData = {};
-                days.forEach(day => { daysData[day] = Array(numActs).fill(null).map(() => ({ checked: false, time: 0 })); });
+                days.forEach(day => { daysData[day] = {}; });
                 entries[key] = { weekStart: currentWeekStart, days: daysData };
             }
             return entries[key];
         }
 
-        // Actualizar celda
-        function updateCell(day, actIndex, checked, time) {
+        function updateCell(day, actName, checked, time) {
             const entry = getCurrentEntry();
-            if (!entry.days[day]) entry.days[day] = [];
-            if (!entry.days[day][actIndex]) entry.days[day][actIndex] = { checked: false, time: 0 };
-            entry.days[day][actIndex].checked = checked;
-            entry.days[day][actIndex].time = time;
+            if (!entry.days[day]) entry.days[day] = {};
+            if (!entry.days[day][actName]) entry.days[day][actName] = { checked: false, time: 0 };
+            entry.days[day][actName].checked = checked;
+            entry.days[day][actName].time = time;
             saveEntries();
             renderTable();
             renderStats();
@@ -446,7 +462,6 @@
             renderLongTermGoals();
         }
 
-        // ---------- RENDERIZADO ----------
         function renderLanguageTabs() {
             const container = document.getElementById('languageTabs');
             container.innerHTML = '';
@@ -470,75 +485,73 @@
             const entry = getCurrentEntry();
             const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
             const unit = lang.timeUnit || 'min';
+            const activeActivities = lang.activities.filter(act => act.active !== false);
 
-            // Cabecera
-            let thead = '<tr><th>Actividad</th>';
+            let thead = '<table><th>Actividad</th>';
             days.forEach(d => thead += `<th>${d}</th>`);
             thead += '<th>Total</th></tr>';
             document.getElementById('tableHeader').innerHTML = thead;
 
-            // Cuerpo
             let tbody = '';
-            lang.activities.forEach((act, idx) => {
+            activeActivities.forEach(act => {
+                const actName = act.name;
                 let totalAct = 0;
                 let row = `<tr><td class="activity-cell">${act.name} (${act.dailyGoal} ${unit})</td>`;
                 days.forEach(day => {
-                    const cell = entry.days[day]?.[idx] || { checked: false, time: 0 };
+                    const cell = entry.days[day]?.[actName] || { checked: false, time: 0 };
                     totalAct += cell.time || 0;
                     const goalMet = (cell.time >= act.dailyGoal) ? 'goal-met' : '';
                     const markedClass = cell.checked ? 'checkbox-marked' : '';
                     row += `<td class="checkbox-cell ${goalMet} ${markedClass}">`;
-                    row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${idx}" ${cell.checked ? 'checked' : ''}>`;
-                    row += `<input type="number" class="time-input" data-day="${day}" data-act="${idx}" value="${cell.time || 0}" min="0" step="1">`;
+                    row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${actName}" ${cell.checked ? 'checked' : ''}>`;
+                    row += `<input type="number" class="time-input" data-day="${day}" data-act="${actName}" value="${cell.time || 0}" min="0" step="1">`;
                     row += `</td>`;
                 });
-                row += `<td>${totalAct} ${unit}</td></tr>`;
+                row += `<td>${totalAct} ${unit}</td>`;
+                row += `</tr>`;
                 tbody += row;
             });
             document.getElementById('tableBody').innerHTML = tbody;
 
-            // Pie (totales día)
             let totalGeneral = 0;
             let foot = '<tr class="total-row"><td>Total día</td>';
             days.forEach(day => {
                 let dayTotal = 0;
-                lang.activities.forEach((_, idx) => { dayTotal += entry.days[day]?.[idx]?.time || 0; });
+                activeActivities.forEach(act => {
+                    dayTotal += entry.days[day]?.[act.name]?.time || 0;
+                });
                 totalGeneral += dayTotal;
                 foot += `<td>${dayTotal} ${unit}</td>`;
             });
             foot += `<td>${totalGeneral} ${unit}</td></tr>`;
             document.getElementById('tableFoot').innerHTML = foot;
 
-            // Eventos
             document.querySelectorAll('.day-check').forEach(cb => {
-                cb.onchange = function(e) {
+                cb.onchange = function() {
                     const day = this.dataset.day;
-                    const actIdx = this.dataset.act;
-                    const timeInput = document.querySelector(`.time-input[data-day="${day}"][data-act="${actIdx}"]`);
+                    const actName = this.dataset.act;
+                    const timeInput = document.querySelector(`.time-input[data-day="${day}"][data-act="${actName}"]`);
                     const time = parseInt(timeInput.value) || 0;
-                    updateCell(day, parseInt(actIdx), this.checked, time);
+                    updateCell(day, actName, this.checked, time);
                 };
             });
             document.querySelectorAll('.time-input').forEach(inp => {
-                inp.onchange = function(e) {
+                inp.onchange = function() {
                     const day = this.dataset.day;
-                    const actIdx = this.dataset.act;
+                    const actName = this.dataset.act;
                     const time = parseInt(this.value) || 0;
-                    const check = document.querySelector(`.day-check[data-day="${day}"][data-act="${actIdx}"]`);
-                    updateCell(day, parseInt(actIdx), check.checked, time);
+                    const check = document.querySelector(`.day-check[data-day="${day}"][data-act="${actName}"]`);
+                    updateCell(day, actName, check.checked, time);
                 };
             });
 
             document.getElementById('weekRange').textContent = formatDateRange(currentWeekStart);
         }
 
-        // Estadísticas: promedio, rachas, etc.
         function renderStats() {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
             const unit = lang.timeUnit || 'min';
-
-            // Recolectar datos de todos los días de este idioma
             let dailyTotals = [];
             let totalChecked = 0;
             let daysWithChecked = new Set();
@@ -549,8 +562,8 @@
                     const weekStart = entry.weekStart;
                     const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
                     Object.entries(entry.days).forEach(([dayName, acts]) => {
-                        const total = acts.reduce((acc, a) => acc + (a?.time || 0), 0);
-                        const anyChecked = acts.some(a => a?.checked);
+                        const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
+                        const anyChecked = Object.values(acts).some(a => a?.checked);
                         if (anyChecked) {
                             const dayOffset = daysMap[dayName];
                             const d = new Date(weekStart + 'T12:00:00');
@@ -558,7 +571,7 @@
                             const dateStr = d.toISOString().split('T')[0];
                             daysWithChecked.add(dateStr);
                         }
-                        acts.forEach(a => { if (a?.checked) totalChecked++; });
+                        Object.values(acts).forEach(a => { if (a?.checked) totalChecked++; });
                         if (total > 0) {
                             const dayOffset = daysMap[dayName];
                             const d = new Date(weekStart + 'T12:00:00');
@@ -571,11 +584,8 @@
             });
 
             dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
-
-            // Promedio diario
             const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
 
-            // Rachas (basadas en tiempo, como antes)
             let currentStreak = 0, maxStreak = 0;
             if (dailyTotals.length) {
                 let streak = 1;
@@ -604,12 +614,10 @@
                 } else currentStreak = 0;
             }
 
-            // Meta diaria global
             const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
             const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
             const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
 
-            // Estadísticas nuevas de checkboxes
             const totalCheckedDisplay = totalChecked;
             const daysWithCheckedDisplay = daysWithChecked.size;
 
@@ -624,23 +632,19 @@
             document.getElementById('statsContainer').innerHTML = statsHtml;
         }
 
-        // Calendario mensual
         function renderCalendar() {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
             const unit = lang.timeUnit;
             const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
-
-            // Obtener mes actual (basado en currentWeekStart para mantener coherencia)
             const baseDate = new Date(currentWeekStart + 'T12:00:00');
             const year = baseDate.getFullYear();
-            const month = baseDate.getMonth(); // 0-11
+            const month = baseDate.getMonth();
             const firstDay = new Date(year, month, 1);
             const lastDay = new Date(year, month + 1, 0);
-            const startDayOfWeek = firstDay.getDay(); // 0 dom, 1 lun... Ajustamos a lun=0
+            const startDayOfWeek = firstDay.getDay();
             let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
 
-            // Recolectar totales por día de este idioma
             const dailyMap = new Map();
             Object.keys(entries).forEach(key => {
                 if (key.startsWith(currentLangId + '_')) {
@@ -648,7 +652,7 @@
                     const weekStart = entry.weekStart;
                     const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
                     Object.entries(entry.days).forEach(([dayName, acts]) => {
-                        const total = acts.reduce((acc, a) => acc + (a?.time || 0), 0);
+                        const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
                         if (total > 0) {
                             const dayOffset = daysMap[dayName];
                             const d = new Date(weekStart + 'T12:00:00');
@@ -661,11 +665,7 @@
             });
 
             let calendarHtml = '';
-            // Días vacíos al inicio
-            for (let i = 0; i < startOffset; i++) {
-                calendarHtml += '<div class="calendar-day"></div>';
-            }
-            // Días del mes
+            for (let i = 0; i < startOffset; i++) calendarHtml += '<div class="calendar-day"></div>';
             for (let d = 1; d <= lastDay.getDate(); d++) {
                 const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const total = dailyMap.get(dateStr) || 0;
@@ -680,36 +680,25 @@
             document.getElementById('monthYear').textContent = firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
         }
 
-        // Metas a largo plazo
         function renderLongTermGoals() {
             let html = '';
             languages.forEach(lang => {
-                // Calcular total acumulado en la unidad del idioma (min o h)
                 let totalAcum = 0;
                 Object.keys(entries).forEach(key => {
                     if (key.startsWith(lang.id + '_')) {
                         const entry = entries[key];
                         Object.values(entry.days).forEach(acts => {
-                            acts.forEach(a => { if (a) totalAcum += a.time || 0; });
+                            Object.values(acts).forEach(a => { if (a) totalAcum += a.time || 0; });
                         });
                     }
                 });
-
-                // Obtener meta y su unidad (si no existe, usar la del idioma)
                 const metaObj = lang.longTermGoal || { amount: 0, unit: lang.timeUnit };
                 const metaValor = metaObj.amount || 0;
                 const metaUnidad = metaObj.unit || lang.timeUnit;
-
-                // Convertir el total acumulado a la unidad de la meta
                 let totalConvertido = totalAcum;
-                if (lang.timeUnit === 'min' && metaUnidad === 'h') {
-                    totalConvertido = totalAcum / 60;
-                } else if (lang.timeUnit === 'h' && metaUnidad === 'min') {
-                    totalConvertido = totalAcum * 60;
-                }
-
+                if (lang.timeUnit === 'min' && metaUnidad === 'h') totalConvertido = totalAcum / 60;
+                else if (lang.timeUnit === 'h' && metaUnidad === 'min') totalConvertido = totalAcum * 60;
                 const porcentaje = metaValor > 0 ? Math.min(100, (totalConvertido / metaValor) * 100) : 0;
-
                 html += `<div class="goal-card">
                     <h4>${lang.name}</h4>
                     <p>${totalConvertido.toFixed(1)} ${metaUnidad} / ${metaValor} ${metaUnidad}</p>
@@ -719,12 +708,9 @@
             document.getElementById('longTermGoals').innerHTML = html;
         }
 
-        // Configuración de actividades
         function renderActivitiesConfig() {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
-            
-            // Campo de meta a largo plazo con selector de unidad
             let html = `<div style="margin-bottom:20px; padding:10px; background:#e6f0fa; border-radius:12px;">
                 <label><strong>Meta a largo plazo:</strong> 
                     <input type="number" id="longTermGoalInput" value="${lang.longTermGoal?.amount || 0}" min="0" step="1" style="width:100px;">
@@ -733,90 +719,102 @@
                         <option value="h" ${lang.longTermGoal?.unit === 'h' ? 'selected' : ''}>Horas</option>
                     </select>
                 </label>
-                <button id="saveLongTermGoalBtn" class="small secondary" style="margin-left:10px;">Guardar meta</button>
+                <button id="saveLongTermGoalBtn" class="small secondary">Guardar meta</button>
             </div>`;
-            
-            // Lista de actividades
+
             lang.activities.forEach((act, idx) => {
-                html += `<div class="activity-config" data-index="${idx}">
-                    <input type="text" class="act-name" value="${act.name}" placeholder="Actividad">
-                    <label>Meta diaria: <input type="number" class="act-dailyGoal" value="${act.dailyGoal}" min="0" step="1"></label>
-                    <button class="warning small remove-act">✕</button>
+                const archivedClass = (act.active === false) ? 'archived' : '';
+                html += `<div class="activity-config ${archivedClass}" data-act-name="${act.name}">
+                    <input type="text" class="act-name" value="${act.name}" style="flex:2;">
+                    <label>Meta diaria: <input type="number" class="act-dailyGoal" value="${act.dailyGoal}" min="0" step="1" style="width:80px;"></label>
+                    <button class="small secondary archive-act" title="Archivar/ocultar">📦</button>
+                    <button class="small warning delete-act-data" title="Borrar todos los registros de esta actividad">🗑️ Datos</button>
+                    <button class="small warning remove-act" title="Eliminar actividad por completo">✕</button>
                 </div>`;
             });
-            
             document.getElementById('activitiesConfig').innerHTML = html;
 
-            // Evento para guardar meta a largo plazo
-            document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', function() {
+            document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', () => {
                 const newAmount = parseInt(document.getElementById('longTermGoalInput').value) || 0;
                 const newUnit = document.getElementById('longTermGoalUnit').value;
                 lang.longTermGoal = { amount: newAmount, unit: newUnit };
                 saveLanguages();
-                renderLongTermGoals(); // <-- Esto actualiza el panel de metas
-                renderActivitiesConfig(); // Opcional: refresca la configuración para que el selector muestre la unidad guardada
+                renderLongTermGoals();
+                renderActivitiesConfig();
                 alert('Meta a largo plazo guardada');
             });
 
-            // Eliminar idioma (con selector)
-            document.getElementById('deleteLangBtn').addEventListener('click', function() {
-                if (languages.length === 0) {
-                    alert('No hay idiomas para eliminar.');
-                    return;
-                }
-                
-                // Crear un mensaje con la lista numerada de idiomas
-                let message = 'Selecciona el número del idioma a eliminar:\n';
-                languages.forEach((lang, index) => {
-                    message += `${index + 1}. ${lang.name}\n`;
-                });
-                
-                const input = prompt(message);
-                if (input === null) return; // Cancelar
-                
-                const selectedIndex = parseInt(input) - 1;
-                if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= languages.length) {
-                    alert('Número inválido.');
-                    return;
-                }
-                
-                const langToDelete = languages[selectedIndex];
-                if (confirm(`¿Eliminar el idioma "${langToDelete.name}"? Se borrarán TODOS sus registros y metas.`)) {
-                    const id = langToDelete.id;
-                    
-                    // Eliminar del array
-                    languages.splice(selectedIndex, 1);
-                    
-                    // Eliminar todas las entradas (registros) de ese idioma
-                    Object.keys(entries).forEach(key => {
-                        if (key.startsWith(id + '_')) {
-                            delete entries[key];
-                        }
-                    });
-                    
-                    // Si el idioma eliminado era el actual, cambiar al primero disponible
-                    if (currentLangId === id) {
-                        currentLangId = languages.length > 0 ? languages[0].id : null;
+            // Archivar / Restaurar
+            document.querySelectorAll('.archive-act').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const div = btn.closest('.activity-config');
+                    const actName = div.dataset.actName;
+                    const activity = lang.activities.find(a => a.name === actName);
+                    if (activity) {
+                        activity.active = !activity.active;
+                        saveLanguages();
+                        renderActivitiesConfig();
+                        renderTable();
+                        renderStats();
+                        renderCalendar();
+                        renderLongTermGoals();
                     }
-                    
-                    saveLanguages();
-                    saveEntries();
-                    renderAll(); // Refrescar toda la interfaz
-                    alert(`Idioma "${langToDelete.name}" eliminado.`);
-                }
+                });
             });
 
-            // Eventos para eliminar actividad
+            // Borrar datos de la actividad (todos los registros)
+            document.querySelectorAll('.delete-act-data').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const div = btn.closest('.activity-config');
+                    const actName = div.dataset.actName;
+                    if (confirm(`¿Borrar TODOS los registros (tiempos y checks) de la actividad "${actName}"? Esta acción no se puede deshacer.`)) {
+                        // Recorrer todas las entradas de este idioma
+                        Object.keys(entries).forEach(key => {
+                            if (key.startsWith(currentLangId + '_')) {
+                                const entry = entries[key];
+                                Object.values(entry.days).forEach(dayObj => {
+                                    if (dayObj[actName]) delete dayObj[actName];
+                                });
+                            }
+                        });
+                        saveEntries();
+                        renderTable();
+                        renderStats();
+                        renderCalendar();
+                        renderLongTermGoals();
+                        alert(`Todos los registros de "${actName}" han sido eliminados.`);
+                    }
+                });
+            });
+
+            // Eliminar completamente la actividad
             document.querySelectorAll('.remove-act').forEach(btn => {
-                btn.onclick = function() {
-                    const div = this.closest('.activity-config');
-                    const idx = div.dataset.index;
-                    lang.activities.splice(idx, 1);
-                    saveLanguages();
-                    renderActivitiesConfig();
-                    renderTable();
-                    renderLongTermGoals();
-                };
+                btn.addEventListener('click', (e) => {
+                    const div = btn.closest('.activity-config');
+                    const actName = div.dataset.actName;
+                    if (confirm(`¿Eliminar la actividad "${actName}"? Se perderán TODOS los registros y la definición. Esta acción no se puede deshacer.`)) {
+                        const index = lang.activities.findIndex(a => a.name === actName);
+                        if (index !== -1) {
+                            lang.activities.splice(index, 1);
+                            // Opcional: también borrar los datos de esa actividad (ya lo haremos)
+                            Object.keys(entries).forEach(key => {
+                                if (key.startsWith(currentLangId + '_')) {
+                                    const entry = entries[key];
+                                    Object.values(entry.days).forEach(dayObj => {
+                                        if (dayObj[actName]) delete dayObj[actName];
+                                    });
+                                }
+                            });
+                            saveLanguages();
+                            saveEntries();
+                            renderActivitiesConfig();
+                            renderTable();
+                            renderStats();
+                            renderCalendar();
+                            renderLongTermGoals();
+                        }
+                    }
+                });
             });
         }
 
@@ -828,9 +826,10 @@
             renderLongTermGoals();
             renderActivitiesConfig();
             document.getElementById('currentLangName').textContent = languages.find(l => l.id === currentLangId)?.name || '';
+            document.getElementById('timeUnitSelect').value = languages.find(l => l.id === currentLangId)?.timeUnit || 'min';
         }
 
-        // ---------- EVENTOS ----------
+        // Eventos globales
         document.getElementById('prevWeekBtn').onclick = () => {
             const d = new Date(currentWeekStart + 'T12:00:00');
             d.setDate(d.getDate() - 7);
@@ -848,6 +847,10 @@
                 currentWeekStart = getMonday(e.target.value);
                 renderAll();
             }
+        };
+        document.getElementById('goToTodayBtn').onclick = () => {
+            currentWeekStart = getMonday(new Date());
+            renderAll();
         };
         document.getElementById('prevMonthBtn').onclick = () => {
             const d = new Date(currentWeekStart + 'T12:00:00');
@@ -867,8 +870,8 @@
             const newLang = {
                 id: generateId(),
                 name,
-                activities: [{ name: 'Actividad', dailyGoal: 30 }],
-                longTermGoal: { amount: 100, period: 'total' },
+                activities: [{ name: 'Actividad', dailyGoal: 30, active: true }],
+                longTermGoal: { amount: 100, unit: 'min' },
                 timeUnit: 'min'
             };
             languages.push(newLang);
@@ -879,7 +882,7 @@
         document.getElementById('addActivityBtn').onclick = () => {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
-            lang.activities.push({ name: 'Nueva', dailyGoal: 0 });
+            lang.activities.push({ name: 'Nueva', dailyGoal: 0, active: true });
             renderActivitiesConfig();
         };
         document.getElementById('saveActivitiesBtn').onclick = () => {
@@ -888,19 +891,45 @@
             const actDivs = document.querySelectorAll('.activity-config');
             const newActs = [];
             actDivs.forEach(div => {
-                const name = div.querySelector('.act-name').value.trim();
+                const nameInput = div.querySelector('.act-name');
+                const name = nameInput.value.trim();
                 const daily = parseInt(div.querySelector('.act-dailyGoal').value) || 0;
-                if (name) newActs.push({ name, dailyGoal: daily });
+                if (name) {
+                    const existing = lang.activities.find(a => a.name === name);
+                    newActs.push({
+                        name,
+                        dailyGoal: daily,
+                        active: existing ? existing.active : true
+                    });
+                }
             });
             lang.activities = newActs;
             lang.timeUnit = document.getElementById('timeUnitSelect').value;
             saveLanguages();
-            // Podríamos migrar entries? No por simplicidad, pero se perdería correlación si cambian índices.
-            alert('Actividades guardadas. Revisa las semanas previas, los datos podrían no coincidir si cambió el orden.');
+            alert('Actividades guardadas. Ten en cuenta que si renombraste alguna actividad, los datos históricos de la actividad anterior no se migrarán automáticamente.');
             renderAll();
         };
 
-        // Exportar / Importar
+        document.getElementById('deleteLangBtn').addEventListener('click', () => {
+            if (languages.length === 0) return alert('No hay idiomas.');
+            let msg = 'Selecciona el número del idioma a eliminar:\n';
+            languages.forEach((l, i) => msg += `${i+1}. ${l.name}\n`);
+            const input = prompt(msg);
+            if (!input) return;
+            const idx = parseInt(input) - 1;
+            if (isNaN(idx) || idx < 0 || idx >= languages.length) return alert('Número inválido');
+            const langToDelete = languages[idx];
+            if (confirm(`¿Eliminar "${langToDelete.name}"? Se perderán todos los registros.`)) {
+                const id = langToDelete.id;
+                languages.splice(idx, 1);
+                Object.keys(entries).forEach(k => { if (k.startsWith(id + '_')) delete entries[k]; });
+                if (currentLangId === id) currentLangId = languages.length ? languages[0].id : null;
+                saveLanguages();
+                saveEntries();
+                renderAll();
+            }
+        });
+
         document.getElementById('exportBtn').onclick = () => {
             const data = { languages, entries };
             const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -909,15 +938,14 @@
             a.href = url;
             a.download = 'idiomas_backup.json';
             a.click();
+            URL.revokeObjectURL(url);
         };
-        document.getElementById('importBtn').onclick = () => {
-            document.getElementById('importFile').click();
-        };
+        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
         document.getElementById('importFile').onchange = (e) => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
+            reader.onload = ev => {
                 try {
                     const data = JSON.parse(ev.target.result);
                     if (data.languages && data.entries) {
@@ -929,36 +957,15 @@
                         renderAll();
                         alert('Importación exitosa');
                     } else throw new Error('Formato inválido');
-                } catch(ex) {
-                    alert('Error al importar: ' + ex);
-                }
+                } catch (ex) { alert('Error al importar: ' + ex); }
             };
             reader.readAsText(file);
         };
 
-        // Service Worker para PWA (opcional, si el navegador lo soporta)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js').catch(e => console.log('SW no registrado'));
-        }
-
-        // Inicializar
         loadData();
         renderAll();
     })();
     document.getElementById('currentYear').textContent = new Date().getFullYear();
-</script>
-
-<!-- Service Worker embebido (si no quieres archivo externo, puedes ponerlo inline pero requiere HTTPS en producción) -->
-<script>
-    // Service Worker simple para cachear la app y hacerla funcionar offline
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register(new URL('sw.js', window.location.href), { type: 'module' }).catch(console.error);
-    }
-</script>
-<!-- Crear sw.js aparte (opcional, por simplicidad lo dejamos embebido pero lo escribimos en un bloque aparte) -->
-<script>
-    // Este código se ejecutaría si fuera un archivo sw.js, pero como está inline no funcionará como SW.
-    // Para que funcione, necesitas un archivo sw.js real. Te explico al final.
 </script>
 </body>
 </html>
