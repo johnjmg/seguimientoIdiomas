@@ -249,6 +249,14 @@
         outline-offset: -2px;
         border-radius: 8px;
         }
+
+        button.warning {
+        background: #b91c1c;
+        border-color: #7f1d1d;
+        }
+        button.warning:hover {
+            background: #991b1b;
+        }
     </style>
     <!-- Manifest para PWA (se crea dinámicamente) -->
     <link rel="manifest" href="data:application/manifest+json,{
@@ -278,6 +286,7 @@
                 <button id="importBtn" class="secondary small">📥 Importar</button>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
                 <button id="addLangBtn" class="small">➕ Idioma</button>
+                <button id="deleteLangBtn" class="small warning">🗑️ Eliminar idioma</button>
             </div>
         </div>
     </div>
@@ -747,6 +756,54 @@
                 renderLongTermGoals(); // <-- Esto actualiza el panel de metas
                 renderActivitiesConfig(); // Opcional: refresca la configuración para que el selector muestre la unidad guardada
                 alert('Meta a largo plazo guardada');
+            });
+
+            // Eliminar idioma (con selector)
+            document.getElementById('deleteLangBtn').addEventListener('click', function() {
+                if (languages.length === 0) {
+                    alert('No hay idiomas para eliminar.');
+                    return;
+                }
+                
+                // Crear un mensaje con la lista numerada de idiomas
+                let message = 'Selecciona el número del idioma a eliminar:\n';
+                languages.forEach((lang, index) => {
+                    message += `${index + 1}. ${lang.name}\n`;
+                });
+                
+                const input = prompt(message);
+                if (input === null) return; // Cancelar
+                
+                const selectedIndex = parseInt(input) - 1;
+                if (isNaN(selectedIndex) || selectedIndex < 0 || selectedIndex >= languages.length) {
+                    alert('Número inválido.');
+                    return;
+                }
+                
+                const langToDelete = languages[selectedIndex];
+                if (confirm(`¿Eliminar el idioma "${langToDelete.name}"? Se borrarán TODOS sus registros y metas.`)) {
+                    const id = langToDelete.id;
+                    
+                    // Eliminar del array
+                    languages.splice(selectedIndex, 1);
+                    
+                    // Eliminar todas las entradas (registros) de ese idioma
+                    Object.keys(entries).forEach(key => {
+                        if (key.startsWith(id + '_')) {
+                            delete entries[key];
+                        }
+                    });
+                    
+                    // Si el idioma eliminado era el actual, cambiar al primero disponible
+                    if (currentLangId === id) {
+                        currentLangId = languages.length > 0 ? languages[0].id : null;
+                    }
+                    
+                    saveLanguages();
+                    saveEntries();
+                    renderAll(); // Refrescar toda la interfaz
+                    alert(`Idioma "${langToDelete.name}" eliminado.`);
+                }
             });
 
             // Eventos para eliminar actividad
