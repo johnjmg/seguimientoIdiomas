@@ -341,7 +341,7 @@
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
             <tfoot id="tableFoot"></tfoot>
-        寸
+        </table>
     </div>
 
     <div class="panel">
@@ -528,12 +528,12 @@
             const unit = lang.timeUnit || 'min';
             const activeActivities = lang.activities.filter(act => act.active !== false);
 
-            let thead = '<tr><th>Actividad</th>';
+            let thead = ' <table><thead><tr><th>Actividad</th>';
             days.forEach(d => thead += `<th>${d}</th>`);
-            thead += '<th>Total</th>\\n</tr>';
+            thead += '<th>Total</th></tr></thead>';
             document.getElementById('tableHeader').innerHTML = thead;
 
-            let tbody = '';
+            let tbody = '<tbody>';
             activeActivities.forEach(act => {
                 const actName = act.name;
                 let totalAct = 0;
@@ -550,14 +550,14 @@
                     row += `<button class="star-btn" data-day="${day}" data-act="${actName}" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-left:4px; color:#f59e0b;">${starIcon}</button>`;
                     row += `</td>`;
                 });
-                row += `<td>${totalAct} ${unit}</td>`;
-                row += `</tr>`;
+                row += `<td>${totalAct} ${unit}</td></tr>`;
                 tbody += row;
             });
+            tbody += '</tbody>';
             document.getElementById('tableBody').innerHTML = tbody;
 
             let totalGeneral = 0;
-            let foot = '<tr class="total-row"><td>Total día</td>';
+            let foot = '<tfoot><tr class="total-row"><td>Total día</td>';
             days.forEach(day => {
                 let dayTotal = 0;
                 activeActivities.forEach(act => {
@@ -566,7 +566,7 @@
                 totalGeneral += dayTotal;
                 foot += `<td>${dayTotal} ${unit}</td>`;
             });
-            foot += `<td>${totalGeneral} ${unit}</td></tr>`;
+            foot += `<td>${totalGeneral} ${unit}</td></tr></tfoot>`;
             document.getElementById('tableFoot').innerHTML = foot;
 
             // Eventos checkboxes
