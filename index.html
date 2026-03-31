@@ -260,6 +260,7 @@
             display: flex;
             gap: 10px;
             justify-content: flex-end;
+            flex-wrap: wrap;
         }
         footer {
             text-align: center;
@@ -301,19 +302,7 @@
             }
         }
     </style>
-    <link rel="manifest" href="data:application/manifest+json,{
-        &quot;name&quot;: &quot;Tracker Idiomas&quot;,
-        &quot;short_name&quot;: &quot;Idiomas&quot;,
-        &quot;start_url&quot;: &quot;.&quot;,
-        &quot;display&quot;: &quot;standalone&quot;,
-        &quot;background_color&quot;: &quot;#f4f7fb&quot;,
-        &quot;theme_color&quot;: &quot;#2d6a4f&quot;,
-        &quot;icons&quot;: [{
-            &quot;src&quot;: &quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%232d6a4f'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E🗣️%3C/text%3E%3C/svg%3E&quot;,
-            &quot;sizes&quot;: &quot;192x192&quot;,
-            &quot;type&quot;: &quot;image/svg+xml&quot;
-        }]
-    }">
+    <link rel="manifest" href="data:application/manifest+json,{...}">
 </head>
 <body>
 <div class="container">
@@ -328,6 +317,7 @@
                 <input type="file" id="importFile" accept=".json" style="display: none;">
                 <button id="addLangBtn" class="small">➕ Idioma</button>
                 <button id="deleteLangBtn" class="small warning">🗑️ Eliminar idioma</button>
+                <button id="fullCleanBtn" class="small warning" style="background:#b45309;">🧹 Limpieza total</button>
             </div>
         </div>
     </div>
@@ -351,7 +341,7 @@
             <thead id="tableHeader"></thead>
             <tbody id="tableBody"></tbody>
             <tfoot id="tableFoot"></tfoot>
-        </table>
+        寸
     </div>
 
     <div class="panel">
@@ -540,7 +530,7 @@
 
             let thead = '<tr><th>Actividad</th>';
             days.forEach(d => thead += `<th>${d}</th>`);
-            thead += '<th>Total</th></tr>';
+            thead += '<th>Total</th>\\n</tr>';
             document.getElementById('tableHeader').innerHTML = thead;
 
             let tbody = '';
@@ -560,7 +550,8 @@
                     row += `<button class="star-btn" data-day="${day}" data-act="${actName}" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-left:4px; color:#f59e0b;">${starIcon}</button>`;
                     row += `</td>`;
                 });
-                row += `<td>${totalAct} ${unit}</td></tr>`;
+                row += `<td>${totalAct} ${unit}</td>`;
+                row += `</tr>`;
                 tbody += row;
             });
             document.getElementById('tableBody').innerHTML = tbody;
@@ -617,7 +608,7 @@
 
         // Función auxiliar para obtener mapa de cumplimiento de objetivos por fecha
         function getObjectivesMetMap(langId) {
-            const objectivesMap = new Map(); // fecha -> boolean (true si se cumplieron todos los objetivos del día)
+            const objectivesMap = new Map();
             Object.keys(entries).forEach(key => {
                 if (key.startsWith(langId + '_')) {
                     const entry = entries[key];
@@ -718,7 +709,6 @@
             const totalCheckedDisplay = totalChecked;
             const daysWithCheckedDisplay = daysWithChecked.size;
 
-            // Estadísticas de objetivos
             const objectivesMap = getObjectivesMetMap(currentLangId);
             let objectivesMetCount = 0;
             const sortedObjDates = Array.from(objectivesMap.keys()).sort();
@@ -738,7 +728,6 @@
                     streak = 0;
                 }
             }
-            // Racha actual (desde hoy hacia atrás)
             let todayObjStreak = 0;
             let checkDate = new Date();
             while (true) {
@@ -950,6 +939,82 @@
             });
         }
 
+        // ---------- LIMPIEZA TOTAL ----------
+        function cleanEmptyWeeks() {
+            let removedCount = 0;
+            for (let key in entries) {
+                const entry = entries[key];
+                let hasAnyTime = false;
+                for (let day in entry.days) {
+                    const dayData = entry.days[day];
+                    for (let actName in dayData) {
+                        if (dayData[actName] && (dayData[actName].time || 0) > 0) {
+                            hasAnyTime = true;
+                            break;
+                        }
+                    }
+                    if (hasAnyTime) break;
+                }
+                if (!hasAnyTime) {
+                    delete entries[key];
+                    removedCount++;
+                }
+            }
+            return removedCount;
+        }
+
+        function cleanOrphanEntries() {
+            const existingIds = new Set(languages.map(lang => lang.id));
+            let removedCount = 0;
+            for (let key in entries) {
+                const langId = key.split('_')[0];
+                if (!existingIds.has(langId)) {
+                    delete entries[key];
+                    removedCount++;
+                }
+            }
+            return removedCount;
+        }
+
+        function cleanObsoleteActivities() {
+            let removedActsCount = 0;
+            languages.forEach(lang => {
+                const validActNames = new Set(lang.activities.map(act => act.name));
+                Object.keys(entries).forEach(key => {
+                    if (key.startsWith(lang.id + '_')) {
+                        const entry = entries[key];
+                        for (let day in entry.days) {
+                            const dayActs = entry.days[day];
+                            const obsolete = Object.keys(dayActs).filter(actName => !validActNames.has(actName));
+                            if (obsolete.length > 0) {
+                                removedActsCount += obsolete.length;
+                                obsolete.forEach(actName => delete dayActs[actName]);
+                            }
+                        }
+                    }
+                });
+            });
+            return removedActsCount;
+        }
+
+        function fullClean() {
+            let msg = '';
+            const obsoleteRemoved = cleanObsoleteActivities();
+            if (obsoleteRemoved > 0) msg += `Actividades obsoletas: ${obsoleteRemoved} registros eliminados.\n`;
+            const emptyRemoved = cleanEmptyWeeks();
+            if (emptyRemoved > 0) msg += `Semanas vacías: ${emptyRemoved} eliminadas.\n`;
+            const orphanRemoved = cleanOrphanEntries();
+            if (orphanRemoved > 0) msg += `Semanas huérfanas: ${orphanRemoved} eliminadas.\n`;
+            if (obsoleteRemoved === 0 && emptyRemoved === 0 && orphanRemoved === 0) {
+                alert('No se encontraron residuos para limpiar.');
+            } else {
+                saveEntries();
+                alert(`Limpieza total completada:\n${msg}La base de datos ha sido depurada.`);
+                renderAll();
+            }
+        }
+
+        // ---------- RECORDATORIO ----------
         function checkAndShowReminder() {
             const today = new Date().toISOString().split('T')[0];
             const pendingLangs = [];
@@ -983,7 +1048,6 @@
                 const links = pendingLangs.map(lang => `<a href="#" class="reminder-lang" data-lang="${lang}">${lang}</a>`).join(', ');
                 reminderText.innerHTML = `No has registrado actividad hoy en: ${links}. ¡Aprovecha para registrar tu progreso!`;
                 reminderPanel.style.display = 'block';
-                // Añadir eventos a los enlaces
                 document.querySelectorAll('.reminder-lang').forEach(link => {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
@@ -1012,7 +1076,7 @@
             checkAndShowReminder();
         }
 
-        // Eventos globales
+        // ---------- EVENTOS GLOBALES ----------
         document.getElementById('prevWeekBtn').onclick = () => {
             const d = new Date(currentWeekStart + 'T12:00:00');
             d.setDate(d.getDate() - 7);
@@ -1144,6 +1208,8 @@
             };
             reader.readAsText(file);
         };
+
+        document.getElementById('fullCleanBtn').addEventListener('click', fullClean);
 
         loadData();
         renderAll();
