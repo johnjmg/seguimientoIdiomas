@@ -4,279 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
     <title>Seguimiento de Aprendizaje de Idiomas</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌍</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌍%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        }
-        body {
-            background: #f4f7fb;
-            margin: 0;
-            padding: 12px;
-            display: flex;
-            justify-content: center;
-        }
-        .container {
-            max-width: 1400px;
-            width: 100%;
-        }
-        h1, h2, h3 {
-            color: #1e293b;
-            margin: 0 0 12px 0;
-            font-weight: 600;
-        }
-        .panel {
-            background: white;
-            border-radius: 24px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.02);
-            border: 1px solid #e9eef3;
-        }
-        .flex-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .tabs {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-        .tab {
-            background: #eef2f6;
-            padding: 8px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            border: 1px solid transparent;
-            transition: 0.2s;
-        }
-        .tab.active {
-            background: #2d6a4f;
-            color: white;
-            border-color: #1b4b3b;
-        }
-        button, .btn {
-            background: #2d6a4f;
-            color: white;
-            border: none;
-            padding: 10px 18px;
-            border-radius: 40px;
-            font-weight: 600;
-            cursor: pointer;
-            font-size: 0.95rem;
-            transition: 0.2s;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            border: 1px solid #1b4b3b;
-        }
-        button.secondary {
-            background: #64748b;
-            border-color: #475569;
-        }
-        button.warning {
-            background: #b91c1c;
-            border-color: #7f1d1d;
-        }
-        button.warning:hover {
-            background: #991b1b;
-        }
-        button.small {
-            padding: 6px 14px;
-            font-size: 0.85rem;
-        }
-        .week-nav {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            flex-wrap: wrap;
-            background: #f8fafc;
-            padding: 10px 16px;
-            border-radius: 60px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.9rem;
-            min-width: 800px;
-        }
-        th {
-            background: #f1f5f9;
-            padding: 12px 6px;
-            text-align: center;
-            font-weight: 600;
-            color: #334155;
-        }
-        td {
-            padding: 8px 4px;
-            text-align: center;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .activity-cell {
-            background: #f8fafc;
-            font-weight: 500;
-            text-align: left;
-            padding-left: 12px;
-            position: sticky;
-            left: 0;
-            background: white;
-        }
-        .checkbox-cell {
-            background: #ffffff;
-        }
-        .time-input {
-            width: 65px;
-            padding: 6px;
-            border: 1px solid #cbd5e1;
-            border-radius: 20px;
-            text-align: center;
-            margin-top: 4px;
-            font-size: 0.85rem;
-        }
-        .goal-met {
-            background-color: #c8f0d9 !important;
-        }
-        .total-row {
-            background: #f1f5f9;
-            font-weight: 600;
-        }
-        .progress-bar {
-            background: #e2e8f0;
-            border-radius: 30px;
-            height: 28px;
-            width: 100%;
-            overflow: hidden;
-            margin: 8px 0;
-        }
-        .progress-fill {
-            background: #2d6a4f;
-            height: 100%;
-            color: white;
-            line-height: 28px;
-            padding-left: 10px;
-            font-size: 0.9rem;
-            white-space: nowrap;
-        }
-        .goals-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 15px;
-        }
-        .goal-card {
-            background: #f8fafc;
-            border-radius: 20px;
-            padding: 16px;
-            border: 1px solid #dde3e9;
-        }
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
-        }
-        .stat-item {
-            background: #f1f5f9;
-            border-radius: 20px;
-            padding: 16px;
-            text-align: center;
-        }
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: #0f172a;
-        }
-        .calendar {
-            display: grid;
-            grid-template-columns: repeat(7, 1fr);
-            gap: 5px;
-            margin-top: 15px;
-        }
-        .calendar-day {
-            aspect-ratio: 1;
-            background: #f1f5f9;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.8rem;
-            padding: 4px;
-        }
-        .calendar-day.has-data {
-            background: #cbd5e1;
-        }
-        .calendar-day.goal-met-day {
-            background: #a7f3d0;
-        }
-        .calendar-day-number {
-            font-weight: 600;
-        }
-        .config-section {
-            background: #f1f5f9;
-            border-radius: 20px;
-            padding: 20px;
-        }
-        .activity-config {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-            background: white;
-            padding: 8px 12px;
-            border-radius: 40px;
-        }
-        .activity-config.archived {
-            opacity: 0.6;
-            text-decoration: line-through;
-            background: #f1f5f9;
-        }
-        .mobile-friendly {
-            overflow-x: auto;
-        }
-        .export-import {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-        footer {
-            text-align: center;
-            margin-top: 30px;
-            padding: 15px;
-            color: #64748b;
-            border-top: 1px solid #e2e8f0;
-            font-size: 0.9rem;
-        }
-        .checkbox-marked {
-            outline: 2px solid #3b82f6;
-            outline-offset: -2px;
-            border-radius: 8px;
+        /* (todos tus estilos existentes, más alguno adicional para la estrella) */
+        * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+        body { background: #f4f7fb; margin: 0; padding: 12px; display: flex; justify-content: center; }
+        .container { max-width: 1400px; width: 100%; }
+        h1, h2, h3 { color: #1e293b; margin: 0 0 12px 0; font-weight: 600; }
+        .panel { background: white; border-radius: 24px; padding: 20px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.02); border: 1px solid #e9eef3; }
+        .flex-row { display: flex; flex-wrap: wrap; gap: 15px; align-items: center; justify-content: space-between; }
+        .tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+        .tab { background: #eef2f6; padding: 8px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
+        .tab.active { background: #2d6a4f; color: white; border-color: #1b4b3b; }
+        button, .btn { background: #2d6a4f; color: white; border: none; padding: 10px 18px; border-radius: 40px; font-weight: 600; cursor: pointer; font-size: 0.95rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #1b4b3b; }
+        button.secondary { background: #64748b; border-color: #475569; }
+        button.warning { background: #b91c1c; border-color: #7f1d1d; }
+        button.warning:hover { background: #991b1b; }
+        button.small { padding: 6px 14px; font-size: 0.85rem; }
+        .week-nav { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; background: #f8fafc; padding: 10px 16px; border-radius: 60px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 800px; }
+        th { background: #f1f5f9; padding: 12px 6px; text-align: center; font-weight: 600; color: #334155; }
+        td { padding: 8px 4px; text-align: center; border-bottom: 1px solid #e2e8f0; }
+        .activity-cell { background: #f8fafc; font-weight: 500; text-align: left; padding-left: 12px; position: sticky; left: 0; background: white; }
+        .checkbox-cell { background: #ffffff; }
+        .time-input { width: 65px; padding: 6px; border: 1px solid #cbd5e1; border-radius: 20px; text-align: center; margin-top: 4px; font-size: 0.85rem; }
+        .goal-met { background-color: #c8f0d9 !important; }
+        .total-row { background: #f1f5f9; font-weight: 600; }
+        .progress-bar { background: #e2e8f0; border-radius: 30px; height: 28px; width: 100%; overflow: hidden; margin: 8px 0; }
+        .progress-fill { background: #2d6a4f; height: 100%; color: white; line-height: 28px; padding-left: 10px; font-size: 0.9rem; white-space: nowrap; }
+        .goals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
+        .goal-card { background: #f8fafc; border-radius: 20px; padding: 16px; border: 1px solid #dde3e9; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 15px; }
+        .stat-item { background: #f1f5f9; border-radius: 20px; padding: 16px; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 700; color: #0f172a; }
+        .calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-top: 15px; }
+        .calendar-day { aspect-ratio: 1; background: #f1f5f9; border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 0.8rem; padding: 4px; }
+        .calendar-day.has-data { background: #cbd5e1; }
+        .calendar-day.goal-met-day { background: #a7f3d0; }
+        .calendar-day-number { font-weight: 600; }
+        .config-section { background: #f1f5f9; border-radius: 20px; padding: 20px; }
+        .activity-config { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; background: white; padding: 8px 12px; border-radius: 40px; }
+        .activity-config.archived { opacity: 0.6; text-decoration: line-through; background: #f1f5f9; }
+        .mobile-friendly { overflow-x: auto; }
+        .export-import { display: flex; gap: 10px; justify-content: flex-end; }
+        footer { text-align: center; margin-top: 30px; padding: 15px; color: #64748b; border-top: 1px solid #e2e8f0; font-size: 0.9rem; }
+        .checkbox-marked { outline: 2px solid #3b82f6; outline-offset: -2px; border-radius: 8px; }
+        .star-btn { background: none; border: none; font-size: 1.2rem; cursor: pointer; margin-left: 4px; padding: 2px; color: #f59e0b; }
+        .star-btn:hover { transform: scale(1.2); }
+        @media (max-width: 700px) {
+            .time-input { width: 55px; font-size: 0.8rem; }
+            .day-check { transform: scale(1.2); margin: 0 4px; }
+            .activity-cell { font-size: 0.85rem; white-space: normal; }
         }
     </style>
-    <link rel="manifest" href="data:application/manifest+json,{
-        &quot;name&quot;: &quot;Tracker Idiomas&quot;,
-        &quot;short_name&quot;: &quot;Idiomas&quot;,
-        &quot;start_url&quot;: &quot;.&quot;,
-        &quot;display&quot;: &quot;standalone&quot;,
-        &quot;background_color&quot;: &quot;#f4f7fb&quot;,
-        &quot;theme_color&quot;: &quot;#2d6a4f&quot;,
-        &quot;icons&quot;: [{
-            &quot;src&quot;: &quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%232d6a4f'/%3E%3Ctext x='50' y='70' font-size='60' text-anchor='middle' fill='white' font-family='Arial'%3E🗣️%3C/text%3E%3C/svg%3E&quot;,
-            &quot;sizes&quot;: &quot;192x192&quot;,
-            &quot;type&quot;: &quot;image/svg+xml&quot;
-        }]
-    }">
+    <link rel="manifest" href="data:application/manifest+json,{...}">
 </head>
 <body>
 <div class="container">
     <h1>🗓️ Seguimiento de Idiomas</h1>
-
+    <!-- mismo HTML que antes, sin cambios -->
     <div class="panel">
         <div class="flex-row">
             <div class="tabs" id="languageTabs"></div>
@@ -289,7 +76,6 @@
             </div>
         </div>
     </div>
-
     <div class="panel">
         <div class="week-nav">
             <button id="prevWeekBtn">◀</button>
@@ -299,7 +85,6 @@
             <button id="goToTodayBtn" class="small secondary">📅 Hoy</button>
         </div>
     </div>
-
     <div class="panel mobile-friendly">
         <table id="weeklyTable">
             <thead id="tableHeader"></thead>
@@ -307,12 +92,10 @@
             <tfoot id="tableFoot"></tfoot>
         </table>
     </div>
-
     <div class="panel">
         <h2>📊 Estadísticas (idioma actual)</h2>
         <div class="stats-grid" id="statsContainer"></div>
     </div>
-
     <div class="panel">
         <div class="flex-row">
             <h2>📅 Calendario mensual</h2>
@@ -323,14 +106,12 @@
             </div>
         </div>
         <div class="calendar" id="calendarGrid"></div>
-        <p style="font-size:0.85rem; color:#555;">Verde = día con meta cumplida (total ≥ meta diaria global)</p>
+        <p style="font-size:0.85rem; color:#555;">Verde = día con meta de tiempo cumplida. ⭐ = objetivos del día cumplidos.</p>
     </div>
-
     <div class="panel">
         <h2>🎯 Metas a largo plazo</h2>
         <div class="goals-grid" id="longTermGoals"></div>
     </div>
-
     <div class="panel config-section">
         <h3>⚙️ Configurar <span id="currentLangName"></span></h3>
         <div id="activitiesConfig"></div>
@@ -349,426 +130,541 @@
 </div>
 
 <script>
-    (function() {
-        let languages = [];
-        let entries = {};
-        let currentLangId = null;
-        let currentWeekStart = getMonday(new Date());
+(function() {
+    let languages = [];
+    let entries = {};
+    let currentLangId = null;
+    let currentWeekStart = getMonday(new Date());
 
-        const STORAGE_LANGS = 'langs_adv';
-        const STORAGE_ENTRIES = 'entries_adv';
+    const STORAGE_LANGS = 'langs_adv';
+    const STORAGE_ENTRIES = 'entries_adv';
 
-        function getMonday(date) {
-            const d = new Date(date);
-            const day = d.getDay();
-            const diff = (day === 0 ? 6 : day - 1);
-            d.setDate(d.getDate() - diff);
-            return d.toISOString().split('T')[0];
+    function getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = (day === 0 ? 6 : day - 1);
+        d.setDate(d.getDate() - diff);
+        return d.toISOString().split('T')[0];
+    }
+
+    function formatDateRange(mondayStr) {
+        const m = new Date(mondayStr + 'T12:00:00');
+        const s = new Date(m);
+        s.setDate(m.getDate() + 6);
+        return `${m.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} - ${s.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'})}`;
+    }
+
+    function generateId() { return Date.now() + '-' + Math.random().toString(36); }
+
+    function loadData() {
+        const storedLangs = localStorage.getItem(STORAGE_LANGS);
+        if (storedLangs) {
+            languages = JSON.parse(storedLangs);
+            languages.forEach(lang => {
+                if (lang.activities) {
+                    lang.activities.forEach(act => {
+                        if (act.active === undefined) act.active = true;
+                    });
+                }
+            });
+        } else {
+            languages = [
+                { id: '1', name: 'Inglés', activities: [
+                    { name: 'Vocabulario', dailyGoal: 30, active: true },
+                    { name: 'Shadowing', dailyGoal: 20, active: true },
+                    { name: 'Lectura y transcripción', dailyGoal: 30, active: true },
+                    { name: 'Gramática', dailyGoal: 15, active: true },
+                    { name: 'Escribir/hablar', dailyGoal: 20, active: true }
+                ], longTermGoal: { amount: 200, unit: 'min' }, timeUnit: 'min' },
+                { id: '2', name: 'Francés', activities: [
+                    { name: 'Vocabulario', dailyGoal: 30, active: true },
+                    { name: 'Escucha', dailyGoal: 30, active: true },
+                    { name: 'Habla', dailyGoal: 30, active: true }
+                ], longTermGoal: { amount: 540, unit: 'h' }, timeUnit: 'h' }
+            ];
         }
-
-        function formatDateRange(mondayStr) {
-            const m = new Date(mondayStr + 'T12:00:00');
-            const s = new Date(m);
-            s.setDate(m.getDate() + 6);
-            return `${m.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} - ${s.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'})}`;
-        }
-
-        function generateId() { return Date.now() + '-' + Math.random().toString(36); }
-
-        function loadData() {
-            const storedLangs = localStorage.getItem(STORAGE_LANGS);
-            if (storedLangs) {
-                languages = JSON.parse(storedLangs);
-                // Asegurar que cada actividad tenga la propiedad 'active' (true por defecto)
-                languages.forEach(lang => {
-                    if (lang.activities) {
-                        lang.activities.forEach(act => {
-                            if (act.active === undefined) act.active = true;
-                        });
-                    }
-                });
-            } else {
-                languages = [
-                    { id: '1', name: 'Inglés', activities: [
-                        { name: 'Vocabulario', dailyGoal: 30, active: true },
-                        { name: 'Shadowing', dailyGoal: 20, active: true },
-                        { name: 'Lectura y transcripción', dailyGoal: 30, active: true },
-                        { name: 'Gramática', dailyGoal: 15, active: true },
-                        { name: 'Escribir/hablar', dailyGoal: 20, active: true }
-                    ], longTermGoal: { amount: 200, unit: 'min' }, timeUnit: 'min' },
-                    { id: '2', name: 'Francés', activities: [
-                        { name: 'Vocabulario', dailyGoal: 30, active: true },
-                        { name: 'Escucha', dailyGoal: 30, active: true },
-                        { name: 'Habla', dailyGoal: 30, active: true }
-                    ], longTermGoal: { amount: 540, unit: 'h' }, timeUnit: 'h' }
-                ];
-            }
-            const storedEntries = localStorage.getItem(STORAGE_ENTRIES);
-            if (storedEntries) {
-                entries = JSON.parse(storedEntries);
-                // Migración: si alguna entrada tiene arrays en lugar de objetos, convertir
-                for (let key in entries) {
-                    const entry = entries[key];
-                    if (entry.days) {
-                        for (let day in entry.days) {
-                            if (Array.isArray(entry.days[day])) {
-                                const oldArray = entry.days[day];
-                                const newObj = {};
-                                const langId = key.split('_')[0];
-                                const lang = languages.find(l => l.id === langId);
-                                if (lang && lang.activities) {
-                                    lang.activities.forEach((act, idx) => {
-                                        if (oldArray[idx]) {
-                                            newObj[act.name] = oldArray[idx];
-                                        }
-                                    });
-                                }
-                                entry.days[day] = newObj;
+        const storedEntries = localStorage.getItem(STORAGE_ENTRIES);
+        if (storedEntries) {
+            entries = JSON.parse(storedEntries);
+            // Migración: si alguna entrada tiene arrays en lugar de objetos, convertir
+            for (let key in entries) {
+                const entry = entries[key];
+                if (entry.days) {
+                    for (let day in entry.days) {
+                        if (Array.isArray(entry.days[day])) {
+                            const oldArray = entry.days[day];
+                            const newObj = {};
+                            const langId = key.split('_')[0];
+                            const lang = languages.find(l => l.id === langId);
+                            if (lang && lang.activities) {
+                                lang.activities.forEach((act, idx) => {
+                                    if (oldArray[idx]) {
+                                        newObj[act.name] = { ...oldArray[idx], isGoal: false };
+                                    }
+                                });
                             }
+                            entry.days[day] = newObj;
+                        } else {
+                            // Asegurar que cada celda tenga isGoal (por si faltaba)
+                            Object.values(entry.days[day]).forEach(cell => {
+                                if (cell.isGoal === undefined) cell.isGoal = false;
+                            });
                         }
                     }
                 }
-                saveEntries();
-            } else {
-                entries = {};
             }
-            if (languages.length > 0 && !currentLangId) currentLangId = languages[0].id;
-        }
-
-        function saveLanguages() { localStorage.setItem(STORAGE_LANGS, JSON.stringify(languages)); }
-        function saveEntries() { localStorage.setItem(STORAGE_ENTRIES, JSON.stringify(entries)); }
-
-        function getCurrentEntry() {
-            const key = `${currentLangId}_${currentWeekStart}`;
-            if (!entries[key]) {
-                const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-                const daysData = {};
-                days.forEach(day => { daysData[day] = {}; });
-                entries[key] = { weekStart: currentWeekStart, days: daysData };
-            }
-            return entries[key];
-        }
-
-        function updateCell(day, actName, checked, time) {
-            const entry = getCurrentEntry();
-            if (!entry.days[day]) entry.days[day] = {};
-            if (!entry.days[day][actName]) entry.days[day][actName] = { checked: false, time: 0 };
-            entry.days[day][actName].checked = checked;
-            entry.days[day][actName].time = time;
             saveEntries();
-            renderTable();
-            renderStats();
-            renderCalendar();
-            renderLongTermGoals();
+        } else {
+            entries = {};
         }
+        if (languages.length > 0 && !currentLangId) currentLangId = languages[0].id;
+    }
 
-        function renderLanguageTabs() {
-            const container = document.getElementById('languageTabs');
-            container.innerHTML = '';
-            languages.forEach(lang => {
-                const tab = document.createElement('span');
-                tab.className = `tab ${lang.id === currentLangId ? 'active' : ''}`;
-                tab.textContent = lang.name;
-                tab.dataset.id = lang.id;
-                tab.onclick = () => {
-                    currentLangId = lang.id;
-                    renderAll();
-                };
-                container.appendChild(tab);
-            });
-        }
+    function saveLanguages() { localStorage.setItem(STORAGE_LANGS, JSON.stringify(languages)); }
+    function saveEntries() { localStorage.setItem(STORAGE_ENTRIES, JSON.stringify(entries)); }
 
-        function renderTable() {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            if (!lang) return;
-            const entry = getCurrentEntry();
+    function getCurrentEntry() {
+        const key = `${currentLangId}_${currentWeekStart}`;
+        if (!entries[key]) {
             const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-            const unit = lang.timeUnit || 'min';
-            const activeActivities = lang.activities.filter(act => act.active !== false);
+            const daysData = {};
+            days.forEach(day => { daysData[day] = {}; });
+            entries[key] = { weekStart: currentWeekStart, days: daysData };
+        }
+        return entries[key];
+    }
 
-            let thead = '<table><th>Actividad</th>';
-            days.forEach(d => thead += `<th>${d}</th>`);
-            thead += '<th>Total</th></tr>';
-            document.getElementById('tableHeader').innerHTML = thead;
+    function updateCell(day, actName, checked, time, isGoal) {
+        const entry = getCurrentEntry();
+        if (!entry.days[day]) entry.days[day] = {};
+        if (!entry.days[day][actName]) entry.days[day][actName] = { checked: false, time: 0, isGoal: false };
+        entry.days[day][actName].checked = checked;
+        entry.days[day][actName].time = time;
+        if (isGoal !== undefined) entry.days[day][actName].isGoal = isGoal;
+        saveEntries();
+        renderTable();
+        renderStats();
+        renderCalendar();
+        renderLongTermGoals();
+    }
 
-            let tbody = '';
-            activeActivities.forEach(act => {
-                const actName = act.name;
-                let totalAct = 0;
-                let row = `<tr><td class="activity-cell">${act.name} (${act.dailyGoal} ${unit})</td>`;
-                days.forEach(day => {
-                    const cell = entry.days[day]?.[actName] || { checked: false, time: 0 };
-                    totalAct += cell.time || 0;
-                    const goalMet = (cell.time >= act.dailyGoal) ? 'goal-met' : '';
-                    const markedClass = cell.checked ? 'checkbox-marked' : '';
-                    row += `<td class="checkbox-cell ${goalMet} ${markedClass}">`;
-                    row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${actName}" ${cell.checked ? 'checked' : ''}>`;
-                    row += `<input type="number" class="time-input" data-day="${day}" data-act="${actName}" value="${cell.time || 0}" min="0" step="1">`;
-                    row += `</td>`;
-                });
-                row += `<td>${totalAct} ${unit}</td>`;
-                row += `</tr>`;
-                tbody += row;
-            });
-            document.getElementById('tableBody').innerHTML = tbody;
+    function renderLanguageTabs() {
+        const container = document.getElementById('languageTabs');
+        container.innerHTML = '';
+        languages.forEach(lang => {
+            const tab = document.createElement('span');
+            tab.className = `tab ${lang.id === currentLangId ? 'active' : ''}`;
+            tab.textContent = lang.name;
+            tab.dataset.id = lang.id;
+            tab.onclick = () => {
+                currentLangId = lang.id;
+                renderAll();
+            };
+            container.appendChild(tab);
+        });
+    }
 
-            let totalGeneral = 0;
-            let foot = '<tr class="total-row"><td>Total día</td>';
+    function renderTable() {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        if (!lang) return;
+        const entry = getCurrentEntry();
+        const days = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+        const unit = lang.timeUnit || 'min';
+        const activeActivities = lang.activities.filter(act => act.active !== false);
+
+        let thead = '</table><th>Actividad</th>';
+        days.forEach(d => thead += `<th>${d}</th>`);
+        thead += '<th>Total</th></tr>';
+        document.getElementById('tableHeader').innerHTML = thead;
+
+        let tbody = '';
+        activeActivities.forEach(act => {
+            const actName = act.name;
+            let totalAct = 0;
+            let row = `<tr><td class="activity-cell">${act.name} (${act.dailyGoal} ${unit})</td>`;
             days.forEach(day => {
-                let dayTotal = 0;
-                activeActivities.forEach(act => {
-                    dayTotal += entry.days[day]?.[act.name]?.time || 0;
+                const cell = entry.days[day]?.[actName] || { checked: false, time: 0, isGoal: false };
+                totalAct += cell.time || 0;
+                const goalMet = (cell.time >= act.dailyGoal) ? 'goal-met' : '';
+                const markedClass = cell.checked ? 'checkbox-marked' : '';
+                const starIcon = cell.isGoal ? '★' : '☆';
+                row += `<td class="checkbox-cell ${goalMet} ${markedClass}">`;
+                row += `<input type="checkbox" class="day-check" data-day="${day}" data-act="${actName}" ${cell.checked ? 'checked' : ''}>`;
+                row += `<input type="number" class="time-input" data-day="${day}" data-act="${actName}" value="${cell.time || 0}" min="0" step="1">`;
+                row += `<button class="star-btn" data-day="${day}" data-act="${actName}" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-left:4px; color:#f59e0b;">${starIcon}</button>`;
+                row += `</td>`;
+            });
+            row += `<td>${totalAct} ${unit}</td>`;
+            row += `<tr>`;
+            tbody += row;
+        });
+        document.getElementById('tableBody').innerHTML = tbody;
+
+        let totalGeneral = 0;
+        let foot = '<tr class="total-row"><td>Total día</td>';
+        days.forEach(day => {
+            let dayTotal = 0;
+            activeActivities.forEach(act => {
+                dayTotal += entry.days[day]?.[act.name]?.time || 0;
+            });
+            totalGeneral += dayTotal;
+            foot += `<td>${dayTotal} ${unit}</td>`;
+        });
+        foot += `<td>${totalGeneral} ${unit}</td></tr>`;
+        document.getElementById('tableFoot').innerHTML = foot;
+
+        // Eventos checkboxes
+        document.querySelectorAll('.day-check').forEach(cb => {
+            cb.onchange = function() {
+                const day = this.dataset.day;
+                const actName = this.dataset.act;
+                const timeInput = document.querySelector(`.time-input[data-day="${day}"][data-act="${actName}"]`);
+                const time = parseInt(timeInput.value) || 0;
+                const cell = entry.days[day]?.[actName] || {};
+                updateCell(day, actName, this.checked, time, cell.isGoal);
+            };
+        });
+        // Eventos inputs de tiempo
+        document.querySelectorAll('.time-input').forEach(inp => {
+            inp.onchange = function() {
+                const day = this.dataset.day;
+                const actName = this.dataset.act;
+                const time = parseInt(this.value) || 0;
+                const check = document.querySelector(`.day-check[data-day="${day}"][data-act="${actName}"]`);
+                const cell = entry.days[day]?.[actName] || {};
+                updateCell(day, actName, check.checked, time, cell.isGoal);
+            };
+        });
+        // Eventos estrellas
+        document.querySelectorAll('.star-btn').forEach(btn => {
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const day = btn.dataset.day;
+                const actName = btn.dataset.act;
+                const cell = entry.days[day]?.[actName] || { checked: false, time: 0, isGoal: false };
+                const newIsGoal = !cell.isGoal;
+                updateCell(day, actName, cell.checked, cell.time, newIsGoal);
+            };
+        });
+
+        document.getElementById('weekRange').textContent = formatDateRange(currentWeekStart);
+    }
+
+    // Función auxiliar para obtener mapa de cumplimiento de objetivos por fecha
+    function getObjectivesMetMap(langId) {
+        const objectivesMap = new Map(); // fecha -> boolean (true si se cumplieron todos los objetivos del día)
+        Object.keys(entries).forEach(key => {
+            if (key.startsWith(langId + '_')) {
+                const entry = entries[key];
+                const weekStart = entry.weekStart;
+                const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
+                Object.entries(entry.days).forEach(([dayName, acts]) => {
+                    let hasGoal = false;
+                    let allMet = true;
+                    Object.values(acts).forEach(data => {
+                        if (data.isGoal) {
+                            hasGoal = true;
+                            if (!data.checked) allMet = false;
+                        }
+                    });
+                    if (hasGoal) {
+                        const dayOffset = daysMap[dayName];
+                        const d = new Date(weekStart + 'T12:00:00');
+                        d.setDate(d.getDate() + dayOffset);
+                        const dateStr = d.toISOString().split('T')[0];
+                        objectivesMap.set(dateStr, allMet);
+                    }
                 });
-                totalGeneral += dayTotal;
-                foot += `<td>${dayTotal} ${unit}</td>`;
-            });
-            foot += `<td>${totalGeneral} ${unit}</td></tr>`;
-            document.getElementById('tableFoot').innerHTML = foot;
+            }
+        });
+        return objectivesMap;
+    }
 
-            document.querySelectorAll('.day-check').forEach(cb => {
-                cb.onchange = function() {
-                    const day = this.dataset.day;
-                    const actName = this.dataset.act;
-                    const timeInput = document.querySelector(`.time-input[data-day="${day}"][data-act="${actName}"]`);
-                    const time = parseInt(timeInput.value) || 0;
-                    updateCell(day, actName, this.checked, time);
-                };
-            });
-            document.querySelectorAll('.time-input').forEach(inp => {
-                inp.onchange = function() {
-                    const day = this.dataset.day;
-                    const actName = this.dataset.act;
-                    const time = parseInt(this.value) || 0;
-                    const check = document.querySelector(`.day-check[data-day="${day}"][data-act="${actName}"]`);
-                    updateCell(day, actName, check.checked, time);
-                };
-            });
+    function renderStats() {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        const unit = lang.timeUnit || 'min';
+        let dailyTotals = [];
+        let totalChecked = 0;
+        let daysWithChecked = new Set();
 
-            document.getElementById('weekRange').textContent = formatDateRange(currentWeekStart);
+        Object.keys(entries).forEach(key => {
+            if (key.startsWith(currentLangId + '_')) {
+                const entry = entries[key];
+                const weekStart = entry.weekStart;
+                const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
+                Object.entries(entry.days).forEach(([dayName, acts]) => {
+                    const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
+                    const anyChecked = Object.values(acts).some(a => a?.checked);
+                    if (anyChecked) {
+                        const dayOffset = daysMap[dayName];
+                        const d = new Date(weekStart + 'T12:00:00');
+                        d.setDate(d.getDate() + dayOffset);
+                        const dateStr = d.toISOString().split('T')[0];
+                        daysWithChecked.add(dateStr);
+                    }
+                    Object.values(acts).forEach(a => { if (a?.checked) totalChecked++; });
+                    if (total > 0) {
+                        const dayOffset = daysMap[dayName];
+                        const d = new Date(weekStart + 'T12:00:00');
+                        d.setDate(d.getDate() + dayOffset);
+                        const dateStr = d.toISOString().split('T')[0];
+                        dailyTotals.push({ date: dateStr, total });
+                    }
+                });
+            }
+        });
+
+        dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
+        const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
+
+        let currentStreak = 0, maxStreak = 0;
+        if (dailyTotals.length) {
+            let streak = 1;
+            for (let i = 1; i < dailyTotals.length; i++) {
+                const prev = new Date(dailyTotals[i-1].date);
+                const curr = new Date(dailyTotals[i].date);
+                const diffDays = Math.round((curr - prev) / (1000*3600*24));
+                if (diffDays === 1) streak++;
+                else {
+                    maxStreak = Math.max(maxStreak, streak);
+                    streak = 1;
+                }
+            }
+            maxStreak = Math.max(maxStreak, streak);
+            const today = new Date().toISOString().split('T')[0];
+            const todayIndex = dailyTotals.findIndex(d => d.date === today);
+            if (todayIndex >= 0) {
+                let count = 1;
+                for (let i = todayIndex-1; i >= 0; i--) {
+                    const prev = new Date(dailyTotals[i].date);
+                    const next = new Date(dailyTotals[i+1].date);
+                    if ((next - prev) / (1000*3600*24) === 1) count++;
+                    else break;
+                }
+                currentStreak = count;
+            } else currentStreak = 0;
         }
 
-        function renderStats() {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            const unit = lang.timeUnit || 'min';
-            let dailyTotals = [];
-            let totalChecked = 0;
-            let daysWithChecked = new Set();
+        const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
+        const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
+        const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
 
+        const totalCheckedDisplay = totalChecked;
+        const daysWithCheckedDisplay = daysWithChecked.size;
+
+        // Estadísticas de objetivos
+        const objectivesMap = getObjectivesMetMap(currentLangId);
+        let objectivesMetCount = 0;
+        const sortedObjDates = Array.from(objectivesMap.keys()).sort();
+        let currentObjStreak = 0, maxObjStreak = 0;
+        let streak = 0;
+        for (let i = 0; i < sortedObjDates.length; i++) {
+            const date = sortedObjDates[i];
+            if (objectivesMap.get(date)) {
+                objectivesMetCount++;
+                streak++;
+                if (i === sortedObjDates.length-1 || !objectivesMap.get(sortedObjDates[i+1])) {
+                    maxObjStreak = Math.max(maxObjStreak, streak);
+                    streak = 0;
+                }
+            } else {
+                maxObjStreak = Math.max(maxObjStreak, streak);
+                streak = 0;
+            }
+        }
+        // Racha actual (desde hoy hacia atrás)
+        let todayObjStreak = 0;
+        let checkDate = new Date();
+        while (true) {
+            const dateStr = checkDate.toISOString().split('T')[0];
+            if (objectivesMap.get(dateStr) === true) {
+                todayObjStreak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else break;
+        }
+
+        const statsHtml = `
+            <div class="stat-item"><span class="stat-value">${avgDaily}</span><br>Promedio diario (${unit})</div>
+            <div class="stat-item"><span class="stat-value">${currentStreak}</span><br>Racha actual (días)</div>
+            <div class="stat-item"><span class="stat-value">${maxStreak}</span><br>Máxima racha</div>
+            <div class="stat-item"><span class="stat-value">${pctMeta}%</span><br>Días con meta de tiempo</div>
+            <div class="stat-item"><span class="stat-value">${totalCheckedDisplay}</span><br>Actividades marcadas</div>
+            <div class="stat-item"><span class="stat-value">${daysWithCheckedDisplay}</span><br>Días con marca</div>
+            <div class="stat-item"><span class="stat-value">${objectivesMetCount}</span><br>Días con objetivo cumplido</div>
+            <div class="stat-item"><span class="stat-value">${todayObjStreak}</span><br>Racha actual objetivos</div>
+            <div class="stat-item"><span class="stat-value">${maxObjStreak}</span><br>Máx racha objetivos</div>
+        `;
+        document.getElementById('statsContainer').innerHTML = statsHtml;
+    }
+
+    function renderCalendar() {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        const unit = lang.timeUnit;
+        const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
+        const baseDate = new Date(currentWeekStart + 'T12:00:00');
+        const year = baseDate.getFullYear();
+        const month = baseDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const startDayOfWeek = firstDay.getDay();
+        let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
+
+        const dailyMap = new Map();
+        Object.keys(entries).forEach(key => {
+            if (key.startsWith(currentLangId + '_')) {
+                const entry = entries[key];
+                const weekStart = entry.weekStart;
+                const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
+                Object.entries(entry.days).forEach(([dayName, acts]) => {
+                    const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
+                    if (total > 0) {
+                        const dayOffset = daysMap[dayName];
+                        const d = new Date(weekStart + 'T12:00:00');
+                        d.setDate(d.getDate() + dayOffset);
+                        const dateStr = d.toISOString().split('T')[0];
+                        dailyMap.set(dateStr, total);
+                    }
+                });
+            }
+        });
+
+        const objectivesMap = getObjectivesMetMap(currentLangId);
+
+        let calendarHtml = '';
+        for (let i = 0; i < startOffset; i++) calendarHtml += '<div class="calendar-day"></div>';
+        for (let d = 1; d <= lastDay.getDate(); d++) {
+            const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            const total = dailyMap.get(dateStr) || 0;
+            let className = 'calendar-day';
+            if (total > 0) {
+                className += ' has-data';
+                if (total >= globalDailyGoal) className += ' goal-met-day';
+            }
+            const starIcon = objectivesMap.get(dateStr) ? '⭐' : '';
+            calendarHtml += `<div class="${className}"><span class="calendar-day-number">${d}</span><br>${total} ${unit}<br>${starIcon}</div>`;
+        }
+        document.getElementById('calendarGrid').innerHTML = calendarHtml;
+        document.getElementById('monthYear').textContent = firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+    }
+
+    function renderLongTermGoals() {
+        let html = '';
+        languages.forEach(lang => {
+            let totalAcum = 0;
             Object.keys(entries).forEach(key => {
-                if (key.startsWith(currentLangId + '_')) {
+                if (key.startsWith(lang.id + '_')) {
                     const entry = entries[key];
-                    const weekStart = entry.weekStart;
-                    const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
-                    Object.entries(entry.days).forEach(([dayName, acts]) => {
-                        const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
-                        const anyChecked = Object.values(acts).some(a => a?.checked);
-                        if (anyChecked) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            daysWithChecked.add(dateStr);
-                        }
-                        Object.values(acts).forEach(a => { if (a?.checked) totalChecked++; });
-                        if (total > 0) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            dailyTotals.push({ date: dateStr, total });
-                        }
+                    Object.values(entry.days).forEach(acts => {
+                        Object.values(acts).forEach(a => { if (a) totalAcum += a.time || 0; });
                     });
                 }
             });
-
-            dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
-            const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
-
-            let currentStreak = 0, maxStreak = 0;
-            if (dailyTotals.length) {
-                let streak = 1;
-                for (let i = 1; i < dailyTotals.length; i++) {
-                    const prev = new Date(dailyTotals[i-1].date);
-                    const curr = new Date(dailyTotals[i].date);
-                    const diffDays = Math.round((curr - prev) / (1000*3600*24));
-                    if (diffDays === 1) streak++;
-                    else {
-                        maxStreak = Math.max(maxStreak, streak);
-                        streak = 1;
-                    }
-                }
-                maxStreak = Math.max(maxStreak, streak);
-                const today = new Date().toISOString().split('T')[0];
-                const todayIndex = dailyTotals.findIndex(d => d.date === today);
-                if (todayIndex >= 0) {
-                    let count = 1;
-                    for (let i = todayIndex-1; i >= 0; i--) {
-                        const prev = new Date(dailyTotals[i].date);
-                        const next = new Date(dailyTotals[i+1].date);
-                        if ((next - prev) / (1000*3600*24) === 1) count++;
-                        else break;
-                    }
-                    currentStreak = count;
-                } else currentStreak = 0;
-            }
-
-            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
-            const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
-            const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
-
-            const totalCheckedDisplay = totalChecked;
-            const daysWithCheckedDisplay = daysWithChecked.size;
-
-            const statsHtml = `
-                <div class="stat-item"><span class="stat-value">${avgDaily}</span><br>Promedio diario (${unit})</div>
-                <div class="stat-item"><span class="stat-value">${currentStreak}</span><br>Racha actual (días)</div>
-                <div class="stat-item"><span class="stat-value">${maxStreak}</span><br>Máxima racha</div>
-                <div class="stat-item"><span class="stat-value">${pctMeta}%</span><br>Días con meta</div>
-                <div class="stat-item"><span class="stat-value">${totalCheckedDisplay}</span><br>Actividades marcadas</div>
-                <div class="stat-item"><span class="stat-value">${daysWithCheckedDisplay}</span><br>Días con marca</div>
-            `;
-            document.getElementById('statsContainer').innerHTML = statsHtml;
-        }
-
-        function renderCalendar() {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            const unit = lang.timeUnit;
-            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
-            const baseDate = new Date(currentWeekStart + 'T12:00:00');
-            const year = baseDate.getFullYear();
-            const month = baseDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDayOfWeek = firstDay.getDay();
-            let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
-
-            const dailyMap = new Map();
-            Object.keys(entries).forEach(key => {
-                if (key.startsWith(currentLangId + '_')) {
-                    const entry = entries[key];
-                    const weekStart = entry.weekStart;
-                    const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
-                    Object.entries(entry.days).forEach(([dayName, acts]) => {
-                        const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
-                        if (total > 0) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            dailyMap.set(dateStr, total);
-                        }
-                    });
-                }
-            });
-
-            let calendarHtml = '';
-            for (let i = 0; i < startOffset; i++) calendarHtml += '<div class="calendar-day"></div>';
-            for (let d = 1; d <= lastDay.getDate(); d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                const total = dailyMap.get(dateStr) || 0;
-                let className = 'calendar-day';
-                if (total > 0) {
-                    className += ' has-data';
-                    if (total >= globalDailyGoal) className += ' goal-met-day';
-                }
-                calendarHtml += `<div class="${className}"><span class="calendar-day-number">${d}</span><br>${total} ${unit}</div>`;
-            }
-            document.getElementById('calendarGrid').innerHTML = calendarHtml;
-            document.getElementById('monthYear').textContent = firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
-        }
-
-        function renderLongTermGoals() {
-            let html = '';
-            languages.forEach(lang => {
-                let totalAcum = 0;
-                Object.keys(entries).forEach(key => {
-                    if (key.startsWith(lang.id + '_')) {
-                        const entry = entries[key];
-                        Object.values(entry.days).forEach(acts => {
-                            Object.values(acts).forEach(a => { if (a) totalAcum += a.time || 0; });
-                        });
-                    }
-                });
-                const metaObj = lang.longTermGoal || { amount: 0, unit: lang.timeUnit };
-                const metaValor = metaObj.amount || 0;
-                const metaUnidad = metaObj.unit || lang.timeUnit;
-                let totalConvertido = totalAcum;
-                if (lang.timeUnit === 'min' && metaUnidad === 'h') totalConvertido = totalAcum / 60;
-                else if (lang.timeUnit === 'h' && metaUnidad === 'min') totalConvertido = totalAcum * 60;
-                const porcentaje = metaValor > 0 ? Math.min(100, (totalConvertido / metaValor) * 100) : 0;
-                html += `<div class="goal-card">
-                    <h4>${lang.name}</h4>
-                    <p>${totalConvertido.toFixed(1)} ${metaUnidad} / ${metaValor} ${metaUnidad}</p>
-                    <div class="progress-bar"><div class="progress-fill" style="width:${porcentaje}%;">${porcentaje.toFixed(1)}%</div></div>
-                </div>`;
-            });
-            document.getElementById('longTermGoals').innerHTML = html;
-        }
-
-        function renderActivitiesConfig() {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            let html = `<div style="margin-bottom:20px; padding:10px; background:#e6f0fa; border-radius:12px;">
-                <label><strong>Meta a largo plazo:</strong> 
-                    <input type="number" id="longTermGoalInput" value="${lang.longTermGoal?.amount || 0}" min="0" step="1" style="width:100px;">
-                    <select id="longTermGoalUnit">
-                        <option value="min" ${lang.longTermGoal?.unit === 'min' ? 'selected' : ''}>Minutos</option>
-                        <option value="h" ${lang.longTermGoal?.unit === 'h' ? 'selected' : ''}>Horas</option>
-                    </select>
-                </label>
-                <button id="saveLongTermGoalBtn" class="small secondary">Guardar meta</button>
+            const metaObj = lang.longTermGoal || { amount: 0, unit: lang.timeUnit };
+            const metaValor = metaObj.amount || 0;
+            const metaUnidad = metaObj.unit || lang.timeUnit;
+            let totalConvertido = totalAcum;
+            if (lang.timeUnit === 'min' && metaUnidad === 'h') totalConvertido = totalAcum / 60;
+            else if (lang.timeUnit === 'h' && metaUnidad === 'min') totalConvertido = totalAcum * 60;
+            const porcentaje = metaValor > 0 ? Math.min(100, (totalConvertido / metaValor) * 100) : 0;
+            html += `<div class="goal-card">
+                <h4>${lang.name}</h4>
+                <p>${totalConvertido.toFixed(1)} ${metaUnidad} / ${metaValor} ${metaUnidad}</p>
+                <div class="progress-bar"><div class="progress-fill" style="width:${porcentaje}%;">${porcentaje.toFixed(1)}%</div></div>
             </div>`;
+        });
+        document.getElementById('longTermGoals').innerHTML = html;
+    }
 
-            lang.activities.forEach((act, idx) => {
-                const archivedClass = (act.active === false) ? 'archived' : '';
-                html += `<div class="activity-config ${archivedClass}" data-act-name="${act.name}">
-                    <input type="text" class="act-name" value="${act.name}" style="flex:2;">
-                    <label>Meta diaria: <input type="number" class="act-dailyGoal" value="${act.dailyGoal}" min="0" step="1" style="width:80px;"></label>
-                    <button class="small secondary archive-act" title="Archivar/ocultar">📦</button>
-                    <button class="small warning delete-act-data" title="Borrar todos los registros de esta actividad">🗑️ Datos</button>
-                    <button class="small warning remove-act" title="Eliminar actividad por completo">✕</button>
-                </div>`;
+    function renderActivitiesConfig() {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        let html = `<div style="margin-bottom:20px; padding:10px; background:#e6f0fa; border-radius:12px;">
+            <label><strong>Meta a largo plazo:</strong> 
+                <input type="number" id="longTermGoalInput" value="${lang.longTermGoal?.amount || 0}" min="0" step="1" style="width:100px;">
+                <select id="longTermGoalUnit">
+                    <option value="min" ${lang.longTermGoal?.unit === 'min' ? 'selected' : ''}>Minutos</option>
+                    <option value="h" ${lang.longTermGoal?.unit === 'h' ? 'selected' : ''}>Horas</option>
+                </select>
+            </label>
+            <button id="saveLongTermGoalBtn" class="small secondary">Guardar meta</button>
+        </div>`;
+
+        lang.activities.forEach((act, idx) => {
+            const archivedClass = (act.active === false) ? 'archived' : '';
+            html += `<div class="activity-config ${archivedClass}" data-act-name="${act.name}">
+                <input type="text" class="act-name" value="${act.name}" style="flex:2;">
+                <label>Meta diaria: <input type="number" class="act-dailyGoal" value="${act.dailyGoal}" min="0" step="1" style="width:80px;"></label>
+                <button class="small secondary archive-act" title="Archivar/ocultar">📦</button>
+                <button class="small warning delete-act-data" title="Borrar todos los registros de esta actividad">🗑️ Datos</button>
+                <button class="small warning remove-act" title="Eliminar actividad por completo">✕</button>
+            </div>`;
+        });
+        document.getElementById('activitiesConfig').innerHTML = html;
+
+        document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', () => {
+            const newAmount = parseInt(document.getElementById('longTermGoalInput').value) || 0;
+            const newUnit = document.getElementById('longTermGoalUnit').value;
+            lang.longTermGoal = { amount: newAmount, unit: newUnit };
+            saveLanguages();
+            renderLongTermGoals();
+            renderActivitiesConfig();
+            alert('Meta a largo plazo guardada');
+        });
+
+        // Archivar / Restaurar
+        document.querySelectorAll('.archive-act').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const div = btn.closest('.activity-config');
+                const actName = div.dataset.actName;
+                const activity = lang.activities.find(a => a.name === actName);
+                if (activity) {
+                    activity.active = !activity.active;
+                    saveLanguages();
+                    renderActivitiesConfig();
+                    renderTable();
+                    renderStats();
+                    renderCalendar();
+                    renderLongTermGoals();
+                }
             });
-            document.getElementById('activitiesConfig').innerHTML = html;
+        });
 
-            document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', () => {
-                const newAmount = parseInt(document.getElementById('longTermGoalInput').value) || 0;
-                const newUnit = document.getElementById('longTermGoalUnit').value;
-                lang.longTermGoal = { amount: newAmount, unit: newUnit };
-                saveLanguages();
-                renderLongTermGoals();
-                renderActivitiesConfig();
-                alert('Meta a largo plazo guardada');
+        // Borrar datos de la actividad
+        document.querySelectorAll('.delete-act-data').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const div = btn.closest('.activity-config');
+                const actName = div.dataset.actName;
+                if (confirm(`¿Borrar TODOS los registros (tiempos, checks y objetivos) de la actividad "${actName}"? Esta acción no se puede deshacer.`)) {
+                    Object.keys(entries).forEach(key => {
+                        if (key.startsWith(currentLangId + '_')) {
+                            const entry = entries[key];
+                            Object.values(entry.days).forEach(dayObj => {
+                                if (dayObj[actName]) delete dayObj[actName];
+                            });
+                        }
+                    });
+                    saveEntries();
+                    renderTable();
+                    renderStats();
+                    renderCalendar();
+                    renderLongTermGoals();
+                    alert(`Todos los registros de "${actName}" han sido eliminados.`);
+                }
             });
+        });
 
-            // Archivar / Restaurar
-            document.querySelectorAll('.archive-act').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
-                    const activity = lang.activities.find(a => a.name === actName);
-                    if (activity) {
-                        activity.active = !activity.active;
-                        saveLanguages();
-                        renderActivitiesConfig();
-                        renderTable();
-                        renderStats();
-                        renderCalendar();
-                        renderLongTermGoals();
-                    }
-                });
-            });
-
-            // Borrar datos de la actividad (todos los registros)
-            document.querySelectorAll('.delete-act-data').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
-                    if (confirm(`¿Borrar TODOS los registros (tiempos y checks) de la actividad "${actName}"? Esta acción no se puede deshacer.`)) {
-                        // Recorrer todas las entradas de este idioma
+        // Eliminar completamente la actividad
+        document.querySelectorAll('.remove-act').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const div = btn.closest('.activity-config');
+                const actName = div.dataset.actName;
+                if (confirm(`¿Eliminar la actividad "${actName}"? Se perderán TODOS los registros y la definición. Esta acción no se puede deshacer.`)) {
+                    const index = lang.activities.findIndex(a => a.name === actName);
+                    if (index !== -1) {
+                        lang.activities.splice(index, 1);
                         Object.keys(entries).forEach(key => {
                             if (key.startsWith(currentLangId + '_')) {
                                 const entry = entries[key];
@@ -777,195 +673,167 @@
                                 });
                             }
                         });
+                        saveLanguages();
                         saveEntries();
+                        renderActivitiesConfig();
                         renderTable();
                         renderStats();
                         renderCalendar();
                         renderLongTermGoals();
-                        alert(`Todos los registros de "${actName}" han sido eliminados.`);
                     }
-                });
-            });
-
-            // Eliminar completamente la actividad
-            document.querySelectorAll('.remove-act').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
-                    if (confirm(`¿Eliminar la actividad "${actName}"? Se perderán TODOS los registros y la definición. Esta acción no se puede deshacer.`)) {
-                        const index = lang.activities.findIndex(a => a.name === actName);
-                        if (index !== -1) {
-                            lang.activities.splice(index, 1);
-                            // Opcional: también borrar los datos de esa actividad (ya lo haremos)
-                            Object.keys(entries).forEach(key => {
-                                if (key.startsWith(currentLangId + '_')) {
-                                    const entry = entries[key];
-                                    Object.values(entry.days).forEach(dayObj => {
-                                        if (dayObj[actName]) delete dayObj[actName];
-                                    });
-                                }
-                            });
-                            saveLanguages();
-                            saveEntries();
-                            renderActivitiesConfig();
-                            renderTable();
-                            renderStats();
-                            renderCalendar();
-                            renderLongTermGoals();
-                        }
-                    }
-                });
-            });
-        }
-
-        function renderAll() {
-            renderLanguageTabs();
-            renderTable();
-            renderStats();
-            renderCalendar();
-            renderLongTermGoals();
-            renderActivitiesConfig();
-            document.getElementById('currentLangName').textContent = languages.find(l => l.id === currentLangId)?.name || '';
-            document.getElementById('timeUnitSelect').value = languages.find(l => l.id === currentLangId)?.timeUnit || 'min';
-        }
-
-        // Eventos globales
-        document.getElementById('prevWeekBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setDate(d.getDate() - 7);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
-        document.getElementById('nextWeekBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setDate(d.getDate() + 7);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
-        document.getElementById('weekPicker').onchange = (e) => {
-            if (e.target.value) {
-                currentWeekStart = getMonday(e.target.value);
-                renderAll();
-            }
-        };
-        document.getElementById('goToTodayBtn').onclick = () => {
-            currentWeekStart = getMonday(new Date());
-            renderAll();
-        };
-        document.getElementById('prevMonthBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setMonth(d.getMonth() - 1);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
-        document.getElementById('nextMonthBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setMonth(d.getMonth() + 1);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
-        document.getElementById('addLangBtn').onclick = () => {
-            const name = prompt('Nombre del nuevo idioma:');
-            if (!name) return;
-            const newLang = {
-                id: generateId(),
-                name,
-                activities: [{ name: 'Actividad', dailyGoal: 30, active: true }],
-                longTermGoal: { amount: 100, unit: 'min' },
-                timeUnit: 'min'
-            };
-            languages.push(newLang);
-            currentLangId = newLang.id;
-            saveLanguages();
-            renderAll();
-        };
-        document.getElementById('addActivityBtn').onclick = () => {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            lang.activities.push({ name: 'Nueva', dailyGoal: 0, active: true });
-            renderActivitiesConfig();
-        };
-        document.getElementById('saveActivitiesBtn').onclick = () => {
-            if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            const actDivs = document.querySelectorAll('.activity-config');
-            const newActs = [];
-            actDivs.forEach(div => {
-                const nameInput = div.querySelector('.act-name');
-                const name = nameInput.value.trim();
-                const daily = parseInt(div.querySelector('.act-dailyGoal').value) || 0;
-                if (name) {
-                    const existing = lang.activities.find(a => a.name === name);
-                    newActs.push({
-                        name,
-                        dailyGoal: daily,
-                        active: existing ? existing.active : true
-                    });
                 }
             });
-            lang.activities = newActs;
-            lang.timeUnit = document.getElementById('timeUnitSelect').value;
-            saveLanguages();
-            alert('Actividades guardadas. Ten en cuenta que si renombraste alguna actividad, los datos históricos de la actividad anterior no se migrarán automáticamente.');
-            renderAll();
-        };
+        });
+    }
 
-        document.getElementById('deleteLangBtn').addEventListener('click', () => {
-            if (languages.length === 0) return alert('No hay idiomas.');
-            let msg = 'Selecciona el número del idioma a eliminar:\n';
-            languages.forEach((l, i) => msg += `${i+1}. ${l.name}\n`);
-            const input = prompt(msg);
-            if (!input) return;
-            const idx = parseInt(input) - 1;
-            if (isNaN(idx) || idx < 0 || idx >= languages.length) return alert('Número inválido');
-            const langToDelete = languages[idx];
-            if (confirm(`¿Eliminar "${langToDelete.name}"? Se perderán todos los registros.`)) {
-                const id = langToDelete.id;
-                languages.splice(idx, 1);
-                Object.keys(entries).forEach(k => { if (k.startsWith(id + '_')) delete entries[k]; });
-                if (currentLangId === id) currentLangId = languages.length ? languages[0].id : null;
-                saveLanguages();
-                saveEntries();
-                renderAll();
+    function renderAll() {
+        renderLanguageTabs();
+        renderTable();
+        renderStats();
+        renderCalendar();
+        renderLongTermGoals();
+        renderActivitiesConfig();
+        document.getElementById('currentLangName').textContent = languages.find(l => l.id === currentLangId)?.name || '';
+        document.getElementById('timeUnitSelect').value = languages.find(l => l.id === currentLangId)?.timeUnit || 'min';
+    }
+
+    // Eventos globales (igual que antes)
+    document.getElementById('prevWeekBtn').onclick = () => {
+        const d = new Date(currentWeekStart + 'T12:00:00');
+        d.setDate(d.getDate() - 7);
+        currentWeekStart = getMonday(d);
+        renderAll();
+    };
+    document.getElementById('nextWeekBtn').onclick = () => {
+        const d = new Date(currentWeekStart + 'T12:00:00');
+        d.setDate(d.getDate() + 7);
+        currentWeekStart = getMonday(d);
+        renderAll();
+    };
+    document.getElementById('weekPicker').onchange = (e) => {
+        if (e.target.value) {
+            currentWeekStart = getMonday(e.target.value);
+            renderAll();
+        }
+    };
+    document.getElementById('goToTodayBtn').onclick = () => {
+        currentWeekStart = getMonday(new Date());
+        renderAll();
+    };
+    document.getElementById('prevMonthBtn').onclick = () => {
+        const d = new Date(currentWeekStart + 'T12:00:00');
+        d.setMonth(d.getMonth() - 1);
+        currentWeekStart = getMonday(d);
+        renderAll();
+    };
+    document.getElementById('nextMonthBtn').onclick = () => {
+        const d = new Date(currentWeekStart + 'T12:00:00');
+        d.setMonth(d.getMonth() + 1);
+        currentWeekStart = getMonday(d);
+        renderAll();
+    };
+    document.getElementById('addLangBtn').onclick = () => {
+        const name = prompt('Nombre del nuevo idioma:');
+        if (!name) return;
+        const newLang = {
+            id: generateId(),
+            name,
+            activities: [{ name: 'Actividad', dailyGoal: 30, active: true }],
+            longTermGoal: { amount: 100, unit: 'min' },
+            timeUnit: 'min'
+        };
+        languages.push(newLang);
+        currentLangId = newLang.id;
+        saveLanguages();
+        renderAll();
+    };
+    document.getElementById('addActivityBtn').onclick = () => {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        lang.activities.push({ name: 'Nueva', dailyGoal: 0, active: true });
+        renderActivitiesConfig();
+    };
+    document.getElementById('saveActivitiesBtn').onclick = () => {
+        if (!currentLangId) return;
+        const lang = languages.find(l => l.id === currentLangId);
+        const actDivs = document.querySelectorAll('.activity-config');
+        const newActs = [];
+        actDivs.forEach(div => {
+            const nameInput = div.querySelector('.act-name');
+            const name = nameInput.value.trim();
+            const daily = parseInt(div.querySelector('.act-dailyGoal').value) || 0;
+            if (name) {
+                const existing = lang.activities.find(a => a.name === name);
+                newActs.push({
+                    name,
+                    dailyGoal: daily,
+                    active: existing ? existing.active : true
+                });
             }
         });
-
-        document.getElementById('exportBtn').onclick = () => {
-            const data = { languages, entries };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'idiomas_backup.json';
-            a.click();
-            URL.revokeObjectURL(url);
-        };
-        document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
-        document.getElementById('importFile').onchange = (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = ev => {
-                try {
-                    const data = JSON.parse(ev.target.result);
-                    if (data.languages && data.entries) {
-                        languages = data.languages;
-                        entries = data.entries;
-                        saveLanguages();
-                        saveEntries();
-                        if (languages.length) currentLangId = languages[0].id;
-                        renderAll();
-                        alert('Importación exitosa');
-                    } else throw new Error('Formato inválido');
-                } catch (ex) { alert('Error al importar: ' + ex); }
-            };
-            reader.readAsText(file);
-        };
-
-        loadData();
+        lang.activities = newActs;
+        lang.timeUnit = document.getElementById('timeUnitSelect').value;
+        saveLanguages();
+        alert('Actividades guardadas. Ten en cuenta que si renombraste alguna actividad, los datos históricos de la actividad anterior no se migrarán automáticamente.');
         renderAll();
-    })();
-    document.getElementById('currentYear').textContent = new Date().getFullYear();
+    };
+
+    document.getElementById('deleteLangBtn').addEventListener('click', () => {
+        if (languages.length === 0) return alert('No hay idiomas.');
+        let msg = 'Selecciona el número del idioma a eliminar:\n';
+        languages.forEach((l, i) => msg += `${i+1}. ${l.name}\n`);
+        const input = prompt(msg);
+        if (!input) return;
+        const idx = parseInt(input) - 1;
+        if (isNaN(idx) || idx < 0 || idx >= languages.length) return alert('Número inválido');
+        const langToDelete = languages[idx];
+        if (confirm(`¿Eliminar "${langToDelete.name}"? Se perderán todos los registros.`)) {
+            const id = langToDelete.id;
+            languages.splice(idx, 1);
+            Object.keys(entries).forEach(k => { if (k.startsWith(id + '_')) delete entries[k]; });
+            if (currentLangId === id) currentLangId = languages.length ? languages[0].id : null;
+            saveLanguages();
+            saveEntries();
+            renderAll();
+        }
+    });
+
+    document.getElementById('exportBtn').onclick = () => {
+        const data = { languages, entries };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'idiomas_backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+    document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
+    document.getElementById('importFile').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            try {
+                const data = JSON.parse(ev.target.result);
+                if (data.languages && data.entries) {
+                    languages = data.languages;
+                    entries = data.entries;
+                    saveLanguages();
+                    saveEntries();
+                    if (languages.length) currentLangId = languages[0].id;
+                    renderAll();
+                    alert('Importación exitosa');
+                } else throw new Error('Formato inválido');
+            } catch (ex) { alert('Error al importar: ' + ex); }
+        };
+        reader.readAsText(file);
+    };
+
+    loadData();
+    renderAll();
+})();
+document.getElementById('currentYear').textContent = new Date().getFullYear();
 </script>
 </body>
 </html>
