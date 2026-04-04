@@ -7,6 +7,7 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🌍%3C/text%3E%3C/svg%3E">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* estilos */
         * {
             box-sizing: border-box;
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -307,7 +308,6 @@
 <body>
 <div class="container">
     <h1>🗓️ Seguimiento de Idiomas</h1>
-
     <div class="panel">
         <div class="flex-row">
             <div class="tabs" id="languageTabs"></div>
@@ -321,7 +321,6 @@
             </div>
         </div>
     </div>
-
     <div class="panel">
         <div class="week-nav">
             <button id="prevWeekBtn">◀</button>
@@ -335,7 +334,6 @@
             <span id="reminderText"></span>
         </div>
     </div>
-
     <div class="panel mobile-friendly">
         <table id="weeklyTable">
             <thead id="tableHeader"></thead>
@@ -343,30 +341,26 @@
             <tfoot id="tableFoot"></tfoot>
         </table>
     </div>
-
     <div class="panel">
         <h2>📊 Estadísticas (idioma actual)</h2>
         <div class="stats-grid" id="statsContainer"></div>
     </div>
-
     <div class="panel">
         <div class="flex-row">
             <h2>📅 Calendario mensual</h2>
             <div>
-                <button id="prevMonthBtn" class="small">◀</button>
-                <span id="monthYear"></span>
-                <button id="nextMonthBtn" class="small">▶</button>
+                <select id="calendarMonthSelect"></select>
+                <select id="calendarYearSelect"></select>
+                <button id="syncCalendarBtn" class="small secondary">📅 Sincronizar con semana</button>
             </div>
         </div>
         <div class="calendar" id="calendarGrid"></div>
         <p style="font-size:0.85rem; color:#555;">Verde = día con meta de tiempo cumplida. ⭐ = objetivos del día cumplidos.</p>
     </div>
-
     <div class="panel">
         <h2>🎯 Metas a largo plazo</h2>
         <div class="goals-grid" id="longTermGoals"></div>
     </div>
-
     <div class="panel config-section">
         <h3>⚙️ Configurar <span id="currentLangName"></span></h3>
         <div id="activitiesConfig"></div>
@@ -389,37 +383,51 @@
         let languages = [];
         let entries = {};
         let currentLangId = null;
-        let currentWeekStart = getMonday(new Date());
-
+        let currentWeekStart;
+        let calendarYear, calendarMonth;
         const STORAGE_LANGS = 'langs_adv';
         const STORAGE_ENTRIES = 'entries_adv';
+
+        // ---------- FUNCIONES DE FECHA LOCAL ----------
+        function parseLocalDate(dateStr) {
+            const [year, month, day] = dateStr.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+
+        function getLocalDateString(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
 
         function getMonday(date) {
             const d = new Date(date);
             const day = d.getDay();
             const diff = (day === 0 ? 6 : day - 1);
             d.setDate(d.getDate() - diff);
-            return d.toISOString().split('T')[0];
+            return getLocalDateString(d);
         }
 
         function formatDateRange(mondayStr) {
-            const m = new Date(mondayStr + 'T12:00:00');
-            const s = new Date(m);
-            s.setDate(m.getDate() + 6);
-            return `${m.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit'})} - ${s.toLocaleDateString('es-ES', {day:'2-digit', month:'2-digit', year:'numeric'})}`;
+            const monday = parseLocalDate(mondayStr);
+            const sunday = new Date(monday);
+            sunday.setDate(monday.getDate() + 6);
+            const format = (date) => date.toLocaleDateString('es-ES', { day:'2-digit', month:'2-digit' });
+            const yearSuffix = sunday.getFullYear() !== monday.getFullYear() ? `/${sunday.getFullYear()}` : '';
+            return `${format(monday)} - ${format(sunday)}${yearSuffix}`;
         }
 
         function generateId() { return Date.now() + '-' + Math.random().toString(36); }
 
+        // ---------- CARGA Y GUARDADO ----------
         function loadData() {
             const storedLangs = localStorage.getItem(STORAGE_LANGS);
             if (storedLangs) {
                 languages = JSON.parse(storedLangs);
                 languages.forEach(lang => {
                     if (lang.activities) {
-                        lang.activities.forEach(act => {
-                            if (act.active === undefined) act.active = true;
-                        });
+                        lang.activities.forEach(act => { if (act.active === undefined) act.active = true; });
                     }
                 });
             } else {
@@ -441,7 +449,6 @@
             const storedEntries = localStorage.getItem(STORAGE_ENTRIES);
             if (storedEntries) {
                 entries = JSON.parse(storedEntries);
-                // Migración: si alguna entrada tiene arrays en lugar de objetos, convertir
                 for (let key in entries) {
                     const entry = entries[key];
                     if (entry.days) {
@@ -453,17 +460,12 @@
                                 const lang = languages.find(l => l.id === langId);
                                 if (lang && lang.activities) {
                                     lang.activities.forEach((act, idx) => {
-                                        if (oldArray[idx]) {
-                                            newObj[act.name] = { ...oldArray[idx], isGoal: false };
-                                        }
+                                        if (oldArray[idx]) newObj[act.name] = { ...oldArray[idx], isGoal: false };
                                     });
                                 }
                                 entry.days[day] = newObj;
                             } else {
-                                // Asegurar que cada celda tenga isGoal (por si faltaba)
-                                Object.values(entry.days[day]).forEach(cell => {
-                                    if (cell.isGoal === undefined) cell.isGoal = false;
-                                });
+                                Object.values(entry.days[day]).forEach(cell => { if (cell.isGoal === undefined) cell.isGoal = false; });
                             }
                         }
                     }
@@ -473,6 +475,12 @@
                 entries = {};
             }
             if (languages.length > 0 && !currentLangId) currentLangId = languages[0].id;
+            // Inicializar currentWeekStart con la semana actual local
+            if (!currentWeekStart) currentWeekStart = getMonday(new Date());
+            // Inicializar calendario
+            const now = new Date();
+            calendarYear = now.getFullYear();
+            calendarMonth = now.getMonth();
         }
 
         function saveLanguages() { localStorage.setItem(STORAGE_LANGS, JSON.stringify(languages)); }
@@ -511,10 +519,7 @@
                 tab.className = `tab ${lang.id === currentLangId ? 'active' : ''}`;
                 tab.textContent = lang.name;
                 tab.dataset.id = lang.id;
-                tab.onclick = () => {
-                    currentLangId = lang.id;
-                    renderAll();
-                };
+                tab.onclick = () => { currentLangId = lang.id; renderAll(); };
                 container.appendChild(tab);
             });
         }
@@ -528,9 +533,9 @@
             const unit = lang.timeUnit || 'min';
             const activeActivities = lang.activities.filter(act => act.active !== false);
 
-            let thead = ' <table><thead><tr><th>Actividad</th>';
+            let thead = '<table><thead><tr><th>Actividad</th>';
             days.forEach(d => thead += `<th>${d}</th>`);
-            thead += '<th>Total</th></tr></thead>';
+            thead += '<th>Total</th></thead>';
             document.getElementById('tableHeader').innerHTML = thead;
 
             let tbody = '<tbody>';
@@ -550,7 +555,8 @@
                     row += `<button class="star-btn" data-day="${day}" data-act="${actName}" style="background:none; border:none; font-size:1.2rem; cursor:pointer; margin-left:4px; color:#f59e0b;">${starIcon}</button>`;
                     row += `</td>`;
                 });
-                row += `<td>${totalAct} ${unit}</td></tr>`;
+                row += `<td>${totalAct} ${unit}</td>`;
+                row += `</tr>`;
                 tbody += row;
             });
             tbody += '</tbody>';
@@ -560,16 +566,13 @@
             let foot = '<tfoot><tr class="total-row"><td>Total día</td>';
             days.forEach(day => {
                 let dayTotal = 0;
-                activeActivities.forEach(act => {
-                    dayTotal += entry.days[day]?.[act.name]?.time || 0;
-                });
+                activeActivities.forEach(act => { dayTotal += entry.days[day]?.[act.name]?.time || 0; });
                 totalGeneral += dayTotal;
                 foot += `<td>${dayTotal} ${unit}</td>`;
             });
-            foot += `<td>${totalGeneral} ${unit}</td></tr></tfoot>`;
+            foot += `<td>${totalGeneral} ${unit}</td></tfoot>`;
             document.getElementById('tableFoot').innerHTML = foot;
 
-            // Eventos checkboxes
             document.querySelectorAll('.day-check').forEach(cb => {
                 cb.onchange = function() {
                     const day = this.dataset.day;
@@ -580,7 +583,6 @@
                     updateCell(day, actName, this.checked, time, cell.isGoal);
                 };
             });
-            // Eventos inputs de tiempo
             document.querySelectorAll('.time-input').forEach(inp => {
                 inp.onchange = function() {
                     const day = this.dataset.day;
@@ -591,22 +593,18 @@
                     updateCell(day, actName, check.checked, time, cell.isGoal);
                 };
             });
-            // Eventos estrellas
             document.querySelectorAll('.star-btn').forEach(btn => {
                 btn.onclick = (e) => {
                     e.stopPropagation();
                     const day = btn.dataset.day;
                     const actName = btn.dataset.act;
                     const cell = entry.days[day]?.[actName] || { checked: false, time: 0, isGoal: false };
-                    const newIsGoal = !cell.isGoal;
-                    updateCell(day, actName, cell.checked, cell.time, newIsGoal);
+                    updateCell(day, actName, cell.checked, cell.time, !cell.isGoal);
                 };
             });
-
             document.getElementById('weekRange').textContent = formatDateRange(currentWeekStart);
         }
 
-        // Función auxiliar para obtener mapa de cumplimiento de objetivos por fecha
         function getObjectivesMetMap(langId) {
             const objectivesMap = new Map();
             Object.keys(entries).forEach(key => {
@@ -615,8 +613,7 @@
                     const weekStart = entry.weekStart;
                     const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
                     Object.entries(entry.days).forEach(([dayName, acts]) => {
-                        let hasGoal = false;
-                        let allMet = true;
+                        let hasGoal = false, allMet = true;
                         Object.values(acts).forEach(data => {
                             if (data.isGoal) {
                                 hasGoal = true;
@@ -624,10 +621,9 @@
                             }
                         });
                         if (hasGoal) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
+                            const d = parseLocalDate(weekStart);
+                            d.setDate(d.getDate() + daysMap[dayName]);
+                            const dateStr = getLocalDateString(d);
                             objectivesMap.set(dateStr, allMet);
                         }
                     });
@@ -640,9 +636,7 @@
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
             const unit = lang.timeUnit || 'min';
-            let dailyTotals = [];
-            let totalChecked = 0;
-            let daysWithChecked = new Set();
+            let dailyTotals = [], totalChecked = 0, daysWithChecked = new Set();
 
             Object.keys(entries).forEach(key => {
                 if (key.startsWith(currentLangId + '_')) {
@@ -653,26 +647,21 @@
                         const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
                         const anyChecked = Object.values(acts).some(a => a?.checked);
                         if (anyChecked) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            daysWithChecked.add(dateStr);
+                            const d = parseLocalDate(weekStart);
+                            d.setDate(d.getDate() + daysMap[dayName]);
+                            daysWithChecked.add(getLocalDateString(d));
                         }
                         Object.values(acts).forEach(a => { if (a?.checked) totalChecked++; });
                         if (total > 0) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            dailyTotals.push({ date: dateStr, total });
+                            const d = parseLocalDate(weekStart);
+                            d.setDate(d.getDate() + daysMap[dayName]);
+                            dailyTotals.push({ date: getLocalDateString(d), total });
                         }
                     });
                 }
             });
-
             dailyTotals.sort((a,b) => a.date.localeCompare(b.date));
-            const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s, d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
+            const avgDaily = dailyTotals.length ? (dailyTotals.reduce((s,d) => s + d.total, 0) / dailyTotals.length).toFixed(1) : 0;
 
             let currentStreak = 0, maxStreak = 0;
             if (dailyTotals.length) {
@@ -682,13 +671,10 @@
                     const curr = new Date(dailyTotals[i].date);
                     const diffDays = Math.round((curr - prev) / (1000*3600*24));
                     if (diffDays === 1) streak++;
-                    else {
-                        maxStreak = Math.max(maxStreak, streak);
-                        streak = 1;
-                    }
+                    else { maxStreak = Math.max(maxStreak, streak); streak = 1; }
                 }
                 maxStreak = Math.max(maxStreak, streak);
-                const today = new Date().toISOString().split('T')[0];
+                const today = getLocalDateString(new Date());
                 const todayIndex = dailyTotals.findIndex(d => d.date === today);
                 if (todayIndex >= 0) {
                     let count = 1;
@@ -699,27 +685,21 @@
                         else break;
                     }
                     currentStreak = count;
-                } else currentStreak = 0;
+                }
             }
-
-            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
+            const globalDailyGoal = lang.activities.reduce((s,a) => s + a.dailyGoal, 0);
             const daysWithMeta = dailyTotals.filter(d => d.total >= globalDailyGoal).length;
             const pctMeta = dailyTotals.length ? ((daysWithMeta / dailyTotals.length)*100).toFixed(1) : 0;
 
-            const totalCheckedDisplay = totalChecked;
-            const daysWithCheckedDisplay = daysWithChecked.size;
-
             const objectivesMap = getObjectivesMetMap(currentLangId);
-            let objectivesMetCount = 0;
-            const sortedObjDates = Array.from(objectivesMap.keys()).sort();
-            let currentObjStreak = 0, maxObjStreak = 0;
+            let objectivesMetCount = 0, currentObjStreak = 0, maxObjStreak = 0;
+            const sortedObj = Array.from(objectivesMap.keys()).sort();
             let streak = 0;
-            for (let i = 0; i < sortedObjDates.length; i++) {
-                const date = sortedObjDates[i];
-                if (objectivesMap.get(date)) {
+            for (let i = 0; i < sortedObj.length; i++) {
+                if (objectivesMap.get(sortedObj[i])) {
                     objectivesMetCount++;
                     streak++;
-                    if (i === sortedObjDates.length-1 || !objectivesMap.get(sortedObjDates[i+1])) {
+                    if (i === sortedObj.length-1 || !objectivesMap.get(sortedObj[i+1])) {
                         maxObjStreak = Math.max(maxObjStreak, streak);
                         streak = 0;
                     }
@@ -731,20 +711,19 @@
             let todayObjStreak = 0;
             let checkDate = new Date();
             while (true) {
-                const dateStr = checkDate.toISOString().split('T')[0];
+                const dateStr = getLocalDateString(checkDate);
                 if (objectivesMap.get(dateStr) === true) {
                     todayObjStreak++;
                     checkDate.setDate(checkDate.getDate() - 1);
                 } else break;
             }
-
             const statsHtml = `
                 <div class="stat-item"><span class="stat-value">${avgDaily}</span><br>Promedio diario (${unit})</div>
                 <div class="stat-item"><span class="stat-value">${currentStreak}</span><br>Racha actual (días)</div>
                 <div class="stat-item"><span class="stat-value">${maxStreak}</span><br>Máxima racha</div>
                 <div class="stat-item"><span class="stat-value">${pctMeta}%</span><br>Días con meta de tiempo</div>
-                <div class="stat-item"><span class="stat-value">${totalCheckedDisplay}</span><br>Actividades marcadas</div>
-                <div class="stat-item"><span class="stat-value">${daysWithCheckedDisplay}</span><br>Días con marca</div>
+                <div class="stat-item"><span class="stat-value">${totalChecked}</span><br>Actividades marcadas</div>
+                <div class="stat-item"><span class="stat-value">${daysWithChecked.size}</span><br>Días con marca</div>
                 <div class="stat-item"><span class="stat-value">${objectivesMetCount}</span><br>Días con objetivo cumplido</div>
                 <div class="stat-item"><span class="stat-value">${todayObjStreak}</span><br>Racha actual objetivos</div>
                 <div class="stat-item"><span class="stat-value">${maxObjStreak}</span><br>Máx racha objetivos</div>
@@ -756,14 +735,10 @@
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
             const unit = lang.timeUnit;
-            const globalDailyGoal = lang.activities.reduce((sum, a) => sum + (a.dailyGoal || 0), 0);
-            const baseDate = new Date(currentWeekStart + 'T12:00:00');
-            const year = baseDate.getFullYear();
-            const month = baseDate.getMonth();
-            const firstDay = new Date(year, month, 1);
-            const lastDay = new Date(year, month + 1, 0);
-            const startDayOfWeek = firstDay.getDay();
-            let startOffset = (startDayOfWeek === 0) ? 6 : startDayOfWeek - 1;
+            const globalDailyGoal = lang.activities.reduce((s,a) => s + a.dailyGoal, 0);
+            const firstDay = new Date(calendarYear, calendarMonth, 1);
+            const lastDay = new Date(calendarYear, calendarMonth + 1, 0);
+            const startOffset = (firstDay.getDay() === 0 ? 6 : firstDay.getDay() - 1);
 
             const dailyMap = new Map();
             Object.keys(entries).forEach(key => {
@@ -774,22 +749,18 @@
                     Object.entries(entry.days).forEach(([dayName, acts]) => {
                         const total = Object.values(acts).reduce((acc, a) => acc + (a?.time || 0), 0);
                         if (total > 0) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            dailyMap.set(dateStr, total);
+                            const d = parseLocalDate(weekStart);
+                            d.setDate(d.getDate() + daysMap[dayName]);
+                            dailyMap.set(getLocalDateString(d), total);
                         }
                     });
                 }
             });
-
             const objectivesMap = getObjectivesMetMap(currentLangId);
-
             let calendarHtml = '';
             for (let i = 0; i < startOffset; i++) calendarHtml += '<div class="calendar-day"></div>';
             for (let d = 1; d <= lastDay.getDate(); d++) {
-                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+                const dateStr = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
                 const total = dailyMap.get(dateStr) || 0;
                 let className = 'calendar-day';
                 if (total > 0) {
@@ -800,7 +771,31 @@
                 calendarHtml += `<div class="${className}"><span class="calendar-day-number">${d}</span><br>${total} ${unit}<br>${starIcon}</div>`;
             }
             document.getElementById('calendarGrid').innerHTML = calendarHtml;
-            document.getElementById('monthYear').textContent = firstDay.toLocaleDateString('es-ES', { month: 'long', year: 'numeric' });
+            const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            document.querySelector('.flex-row h2').innerHTML = `📅 ${monthNames[calendarMonth]} ${calendarYear}`;
+        }
+
+        function populateCalendarSelectors() {
+            const monthSelect = document.getElementById('calendarMonthSelect');
+            const yearSelect = document.getElementById('calendarYearSelect');
+            const monthNames = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+            monthSelect.innerHTML = '';
+            for (let i = 0; i < 12; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.textContent = monthNames[i];
+                if (i === calendarMonth) opt.selected = true;
+                monthSelect.appendChild(opt);
+            }
+            const currentYear = new Date().getFullYear();
+            yearSelect.innerHTML = '';
+            for (let y = currentYear-2; y <= currentYear+2; y++) {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                if (y === calendarYear) opt.selected = true;
+                yearSelect.appendChild(opt);
+            }
         }
 
         function renderLongTermGoals() {
@@ -811,13 +806,13 @@
                     if (key.startsWith(lang.id + '_')) {
                         const entry = entries[key];
                         Object.values(entry.days).forEach(acts => {
-                            Object.values(acts).forEach(a => { if (a) totalAcum += a.time || 0; });
+                            Object.values(acts).forEach(a => { if (a) totalAcum += a.time; });
                         });
                     }
                 });
                 const metaObj = lang.longTermGoal || { amount: 0, unit: lang.timeUnit };
-                const metaValor = metaObj.amount || 0;
-                const metaUnidad = metaObj.unit || lang.timeUnit;
+                const metaValor = metaObj.amount;
+                const metaUnidad = metaObj.unit;
                 let totalConvertido = totalAcum;
                 if (lang.timeUnit === 'min' && metaUnidad === 'h') totalConvertido = totalAcum / 60;
                 else if (lang.timeUnit === 'h' && metaUnidad === 'min') totalConvertido = totalAcum * 60;
@@ -844,8 +839,7 @@
                 </label>
                 <button id="saveLongTermGoalBtn" class="small secondary">Guardar meta</button>
             </div>`;
-
-            lang.activities.forEach((act, idx) => {
+            lang.activities.forEach(act => {
                 const archivedClass = (act.active === false) ? 'archived' : '';
                 html += `<div class="activity-config ${archivedClass}" data-act-name="${act.name}">
                     <input type="text" class="act-name" value="${act.name}" style="flex:2;">
@@ -856,212 +850,139 @@
                 </div>`;
             });
             document.getElementById('activitiesConfig').innerHTML = html;
-
             document.getElementById('saveLongTermGoalBtn')?.addEventListener('click', () => {
-                const newAmount = parseInt(document.getElementById('longTermGoalInput').value) || 0;
-                const newUnit = document.getElementById('longTermGoalUnit').value;
-                lang.longTermGoal = { amount: newAmount, unit: newUnit };
+                lang.longTermGoal = { amount: parseInt(document.getElementById('longTermGoalInput').value) || 0, unit: document.getElementById('longTermGoalUnit').value };
                 saveLanguages();
                 renderLongTermGoals();
                 renderActivitiesConfig();
                 alert('Meta a largo plazo guardada');
             });
-
-            // Archivar / Restaurar
             document.querySelectorAll('.archive-act').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
+                btn.addEventListener('click', () => {
+                    const actName = btn.closest('.activity-config').dataset.actName;
                     const activity = lang.activities.find(a => a.name === actName);
-                    if (activity) {
-                        activity.active = !activity.active;
-                        saveLanguages();
-                        renderActivitiesConfig();
-                        renderTable();
-                        renderStats();
-                        renderCalendar();
-                        renderLongTermGoals();
-                    }
+                    if (activity) { activity.active = !activity.active; saveLanguages(); renderActivitiesConfig(); renderTable(); renderStats(); renderCalendar(); renderLongTermGoals(); }
                 });
             });
-
-            // Borrar datos de la actividad
             document.querySelectorAll('.delete-act-data').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
-                    if (confirm(`¿Borrar TODOS los registros (tiempos, checks y objetivos) de la actividad "${actName}"? Esta acción no se puede deshacer.`)) {
+                btn.addEventListener('click', () => {
+                    const actName = btn.closest('.activity-config').dataset.actName;
+                    if (confirm(`¿Borrar TODOS los registros de "${actName}"?`)) {
                         Object.keys(entries).forEach(key => {
                             if (key.startsWith(currentLangId + '_')) {
-                                const entry = entries[key];
-                                Object.values(entry.days).forEach(dayObj => {
-                                    if (dayObj[actName]) delete dayObj[actName];
-                                });
+                                Object.values(entries[key].days).forEach(dayObj => { if (dayObj[actName]) delete dayObj[actName]; });
                             }
                         });
                         saveEntries();
-                        renderTable();
-                        renderStats();
-                        renderCalendar();
-                        renderLongTermGoals();
-                        alert(`Todos los registros de "${actName}" han sido eliminados.`);
+                        renderTable(); renderStats(); renderCalendar(); renderLongTermGoals();
+                        alert(`Registros de "${actName}" eliminados.`);
                     }
                 });
             });
-
-            // Eliminar completamente la actividad
             document.querySelectorAll('.remove-act').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const div = btn.closest('.activity-config');
-                    const actName = div.dataset.actName;
-                    if (confirm(`¿Eliminar la actividad "${actName}"? Se perderán TODOS los registros y la definición. Esta acción no se puede deshacer.`)) {
+                btn.addEventListener('click', () => {
+                    const actName = btn.closest('.activity-config').dataset.actName;
+                    if (confirm(`¿Eliminar la actividad "${actName}"? Se perderán todos los registros.`)) {
                         const index = lang.activities.findIndex(a => a.name === actName);
                         if (index !== -1) {
                             lang.activities.splice(index, 1);
                             Object.keys(entries).forEach(key => {
                                 if (key.startsWith(currentLangId + '_')) {
-                                    const entry = entries[key];
-                                    Object.values(entry.days).forEach(dayObj => {
-                                        if (dayObj[actName]) delete dayObj[actName];
-                                    });
+                                    Object.values(entries[key].days).forEach(dayObj => { if (dayObj[actName]) delete dayObj[actName]; });
                                 }
                             });
-                            saveLanguages();
-                            saveEntries();
-                            renderActivitiesConfig();
-                            renderTable();
-                            renderStats();
-                            renderCalendar();
-                            renderLongTermGoals();
+                            saveLanguages(); saveEntries();
+                            renderActivitiesConfig(); renderTable(); renderStats(); renderCalendar(); renderLongTermGoals();
                         }
                     }
                 });
             });
         }
 
-        // ---------- LIMPIEZA TOTAL ----------
+        // Limpieza total (sin cambios funcionales, solo usa las nuevas funciones de fecha si es necesario)
         function cleanEmptyWeeks() {
-            let removedCount = 0;
+            let removed = 0;
             for (let key in entries) {
-                const entry = entries[key];
-                let hasAnyTime = false;
-                for (let day in entry.days) {
-                    const dayData = entry.days[day];
-                    for (let actName in dayData) {
-                        if (dayData[actName] && (dayData[actName].time || 0) > 0) {
-                            hasAnyTime = true;
-                            break;
-                        }
+                let has = false;
+                for (let day in entries[key].days) {
+                    for (let act in entries[key].days[day]) {
+                        if (entries[key].days[day][act]?.time > 0) { has = true; break; }
                     }
-                    if (hasAnyTime) break;
+                    if (has) break;
                 }
-                if (!hasAnyTime) {
-                    delete entries[key];
-                    removedCount++;
-                }
+                if (!has) { delete entries[key]; removed++; }
             }
-            return removedCount;
+            return removed;
         }
-
         function cleanOrphanEntries() {
-            const existingIds = new Set(languages.map(lang => lang.id));
-            let removedCount = 0;
+            const ids = new Set(languages.map(l => l.id));
+            let removed = 0;
             for (let key in entries) {
-                const langId = key.split('_')[0];
-                if (!existingIds.has(langId)) {
-                    delete entries[key];
-                    removedCount++;
-                }
+                if (!ids.has(key.split('_')[0])) { delete entries[key]; removed++; }
             }
-            return removedCount;
+            return removed;
         }
-
         function cleanObsoleteActivities() {
-            let removedActsCount = 0;
+            let removed = 0;
             languages.forEach(lang => {
-                const validActNames = new Set(lang.activities.map(act => act.name));
+                const valid = new Set(lang.activities.map(a => a.name));
                 Object.keys(entries).forEach(key => {
                     if (key.startsWith(lang.id + '_')) {
-                        const entry = entries[key];
-                        for (let day in entry.days) {
-                            const dayActs = entry.days[day];
-                            const obsolete = Object.keys(dayActs).filter(actName => !validActNames.has(actName));
-                            if (obsolete.length > 0) {
-                                removedActsCount += obsolete.length;
-                                obsolete.forEach(actName => delete dayActs[actName]);
-                            }
-                        }
+                        Object.values(entries[key].days).forEach(dayObj => {
+                            Object.keys(dayObj).forEach(actName => {
+                                if (!valid.has(actName)) { delete dayObj[actName]; removed++; }
+                            });
+                        });
                     }
                 });
             });
-            return removedActsCount;
+            return removed;
         }
-
         function fullClean() {
             let msg = '';
-            const obsoleteRemoved = cleanObsoleteActivities();
-            if (obsoleteRemoved > 0) msg += `Actividades obsoletas: ${obsoleteRemoved} registros eliminados.\n`;
-            const emptyRemoved = cleanEmptyWeeks();
-            if (emptyRemoved > 0) msg += `Semanas vacías: ${emptyRemoved} eliminadas.\n`;
-            const orphanRemoved = cleanOrphanEntries();
-            if (orphanRemoved > 0) msg += `Semanas huérfanas: ${orphanRemoved} eliminadas.\n`;
-            if (obsoleteRemoved === 0 && emptyRemoved === 0 && orphanRemoved === 0) {
-                alert('No se encontraron residuos para limpiar.');
-            } else {
-                saveEntries();
-                alert(`Limpieza total completada:\n${msg}La base de datos ha sido depurada.`);
-                renderAll();
-            }
+            const a = cleanObsoleteActivities(); if (a) msg += `Actividades obsoletas: ${a} registros.\n`;
+            const b = cleanEmptyWeeks(); if (b) msg += `Semanas vacías: ${b} eliminadas.\n`;
+            const c = cleanOrphanEntries(); if (c) msg += `Semanas huérfanas: ${c} eliminadas.\n`;
+            if (a+b+c === 0) alert('No se encontraron residuos.');
+            else { saveEntries(); alert(`Limpieza total:\n${msg}Base de datos depurada.`); renderAll(); }
         }
 
-        // ---------- RECORDATORIO ----------
         function checkAndShowReminder() {
-            const today = new Date().toISOString().split('T')[0];
-            const pendingLangs = [];
-
+            const today = getLocalDateString(new Date());
+            const pending = [];
             languages.forEach(lang => {
-                let hasTodayEntry = false;
+                let found = false;
                 Object.keys(entries).forEach(key => {
                     if (key.startsWith(lang.id + '_')) {
                         const entry = entries[key];
                         const weekStart = entry.weekStart;
                         const daysMap = {'Lun':0,'Mar':1,'Mié':2,'Jue':3,'Vie':4,'Sáb':5,'Dom':6};
                         for (let dayName in entry.days) {
-                            const dayOffset = daysMap[dayName];
-                            const d = new Date(weekStart + 'T12:00:00');
-                            d.setDate(d.getDate() + dayOffset);
-                            const dateStr = d.toISOString().split('T')[0];
-                            if (dateStr === today) {
-                                const dayData = entry.days[dayName];
-                                const hasTime = Object.values(dayData).some(cell => (cell.time || 0) > 0);
-                                if (hasTime) hasTodayEntry = true;
+                            const d = parseLocalDate(weekStart);
+                            d.setDate(d.getDate() + daysMap[dayName]);
+                            if (getLocalDateString(d) === today) {
+                                const hasTime = Object.values(entry.days[dayName]).some(cell => (cell.time || 0) > 0);
+                                if (hasTime) found = true;
                             }
                         }
                     }
                 });
-                if (!hasTodayEntry) pendingLangs.push(lang.name);
+                if (!found) pending.push(lang.name);
             });
-
-            const reminderPanel = document.getElementById('reminderPanel');
-            const reminderText = document.getElementById('reminderText');
-            if (pendingLangs.length > 0) {
-                const links = pendingLangs.map(lang => `<a href="#" class="reminder-lang" data-lang="${lang}">${lang}</a>`).join(', ');
-                reminderText.innerHTML = `No has registrado actividad hoy en: ${links}. ¡Aprovecha para registrar tu progreso!`;
-                reminderPanel.style.display = 'block';
+            const panel = document.getElementById('reminderPanel');
+            const text = document.getElementById('reminderText');
+            if (pending.length) {
+                const links = pending.map(lang => `<a href="#" class="reminder-lang" data-lang="${lang}">${lang}</a>`).join(', ');
+                text.innerHTML = `No has registrado actividad hoy en: ${links}. ¡Registra tu progreso!`;
+                panel.style.display = 'block';
                 document.querySelectorAll('.reminder-lang').forEach(link => {
                     link.addEventListener('click', (e) => {
                         e.preventDefault();
-                        const langName = link.dataset.lang;
-                        const lang = languages.find(l => l.name === langName);
-                        if (lang) {
-                            currentLangId = lang.id;
-                            renderAll();
-                        }
+                        const lang = languages.find(l => l.name === link.dataset.lang);
+                        if (lang) { currentLangId = lang.id; renderAll(); }
                     });
                 });
-            } else {
-                reminderPanel.style.display = 'none';
-            }
+            } else panel.style.display = 'none';
         }
 
         function renderAll() {
@@ -1074,121 +995,92 @@
             document.getElementById('currentLangName').textContent = languages.find(l => l.id === currentLangId)?.name || '';
             document.getElementById('timeUnitSelect').value = languages.find(l => l.id === currentLangId)?.timeUnit || 'min';
             checkAndShowReminder();
+            populateCalendarSelectors();
         }
 
-        // ---------- EVENTOS GLOBALES ----------
+        // Eventos
         document.getElementById('prevWeekBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
+            const d = parseLocalDate(currentWeekStart);
             d.setDate(d.getDate() - 7);
             currentWeekStart = getMonday(d);
             renderAll();
         };
         document.getElementById('nextWeekBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
+            const d = parseLocalDate(currentWeekStart);
             d.setDate(d.getDate() + 7);
             currentWeekStart = getMonday(d);
             renderAll();
         };
         document.getElementById('weekPicker').onchange = (e) => {
-            if (e.target.value) {
-                currentWeekStart = getMonday(e.target.value);
-                renderAll();
-            }
+            if (e.target.value) currentWeekStart = getMonday(new Date(e.target.value));
+            renderAll();
         };
         document.getElementById('goToTodayBtn').onclick = () => {
             currentWeekStart = getMonday(new Date());
             renderAll();
         };
-        document.getElementById('prevMonthBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setMonth(d.getMonth() - 1);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
-        document.getElementById('nextMonthBtn').onclick = () => {
-            const d = new Date(currentWeekStart + 'T12:00:00');
-            d.setMonth(d.getMonth() + 1);
-            currentWeekStart = getMonday(d);
-            renderAll();
-        };
+        document.getElementById('calendarMonthSelect').addEventListener('change', (e) => { calendarMonth = parseInt(e.target.value); renderCalendar(); populateCalendarSelectors(); });
+        document.getElementById('calendarYearSelect').addEventListener('change', (e) => { calendarYear = parseInt(e.target.value); renderCalendar(); populateCalendarSelectors(); });
+        document.getElementById('syncCalendarBtn').addEventListener('click', () => {
+            const d = parseLocalDate(currentWeekStart);
+            calendarYear = d.getFullYear();
+            calendarMonth = d.getMonth();
+            populateCalendarSelectors();
+            renderCalendar();
+        });
         document.getElementById('addLangBtn').onclick = () => {
             const name = prompt('Nombre del nuevo idioma:');
             if (!name) return;
-            const newLang = {
-                id: generateId(),
-                name,
-                activities: [{ name: 'Actividad', dailyGoal: 30, active: true }],
-                longTermGoal: { amount: 100, unit: 'min' },
-                timeUnit: 'min'
-            };
-            languages.push(newLang);
-            currentLangId = newLang.id;
+            languages.push({ id: generateId(), name, activities: [{ name: 'Actividad', dailyGoal: 30, active: true }], longTermGoal: { amount: 100, unit: 'min' }, timeUnit: 'min' });
+            currentLangId = languages[languages.length-1].id;
             saveLanguages();
             renderAll();
         };
         document.getElementById('addActivityBtn').onclick = () => {
             if (!currentLangId) return;
-            const lang = languages.find(l => l.id === currentLangId);
-            lang.activities.push({ name: 'Nueva', dailyGoal: 0, active: true });
+            languages.find(l => l.id === currentLangId).activities.push({ name: 'Nueva', dailyGoal: 0, active: true });
             renderActivitiesConfig();
         };
         document.getElementById('saveActivitiesBtn').onclick = () => {
             if (!currentLangId) return;
             const lang = languages.find(l => l.id === currentLangId);
-            const actDivs = document.querySelectorAll('.activity-config');
             const newActs = [];
-            actDivs.forEach(div => {
-                const nameInput = div.querySelector('.act-name');
-                const name = nameInput.value.trim();
+            document.querySelectorAll('.activity-config').forEach(div => {
+                const name = div.querySelector('.act-name').value.trim();
                 const daily = parseInt(div.querySelector('.act-dailyGoal').value) || 0;
-                if (name) {
-                    const existing = lang.activities.find(a => a.name === name);
-                    newActs.push({
-                        name,
-                        dailyGoal: daily,
-                        active: existing ? existing.active : true
-                    });
-                }
+                if (name) newActs.push({ name, dailyGoal: daily, active: lang.activities.find(a => a.name === name)?.active ?? true });
             });
             lang.activities = newActs;
             lang.timeUnit = document.getElementById('timeUnitSelect').value;
             saveLanguages();
-            alert('Actividades guardadas. Ten en cuenta que si renombraste alguna actividad, los datos históricos de la actividad anterior no se migrarán automáticamente.');
+            alert('Actividades guardadas. Si renombraste alguna, los datos históricos no migran.');
             renderAll();
         };
-
         document.getElementById('deleteLangBtn').addEventListener('click', () => {
-            if (languages.length === 0) return alert('No hay idiomas.');
-            let msg = 'Selecciona el número del idioma a eliminar:\n';
-            languages.forEach((l, i) => msg += `${i+1}. ${l.name}\n`);
-            const input = prompt(msg);
-            if (!input) return;
-            const idx = parseInt(input) - 1;
-            if (isNaN(idx) || idx < 0 || idx >= languages.length) return alert('Número inválido');
-            const langToDelete = languages[idx];
-            if (confirm(`¿Eliminar "${langToDelete.name}"? Se perderán todos los registros.`)) {
-                const id = langToDelete.id;
-                languages.splice(idx, 1);
-                Object.keys(entries).forEach(k => { if (k.startsWith(id + '_')) delete entries[k]; });
-                if (currentLangId === id) currentLangId = languages.length ? languages[0].id : null;
-                saveLanguages();
-                saveEntries();
-                renderAll();
+            if (!languages.length) return alert('No hay idiomas.');
+            let msg = 'Selecciona número:\n';
+            languages.forEach((l,i)=>msg+=`${i+1}. ${l.name}\n`);
+            const idx = parseInt(prompt(msg))-1;
+            if (isNaN(idx)||idx<0||idx>=languages.length) return alert('Inválido');
+            const lang = languages[idx];
+            if (confirm(`¿Eliminar "${lang.name}"?`)) {
+                languages.splice(idx,1);
+                Object.keys(entries).forEach(k=>{if(k.startsWith(lang.id+'_'))delete entries[k];});
+                if (currentLangId === lang.id) currentLangId = languages.length?languages[0].id:null;
+                saveLanguages(); saveEntries(); renderAll();
             }
         });
-
         document.getElementById('exportBtn').onclick = () => {
             const data = { languages, entries };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
+            const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
             const a = document.createElement('a');
-            a.href = url;
+            a.href = URL.createObjectURL(blob);
             a.download = 'idiomas_backup.json';
             a.click();
-            URL.revokeObjectURL(url);
+            URL.revokeObjectURL(a.href);
         };
         document.getElementById('importBtn').onclick = () => document.getElementById('importFile').click();
-        document.getElementById('importFile').onchange = (e) => {
+        document.getElementById('importFile').onchange = e => {
             const file = e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
@@ -1198,17 +1090,15 @@
                     if (data.languages && data.entries) {
                         languages = data.languages;
                         entries = data.entries;
-                        saveLanguages();
-                        saveEntries();
+                        saveLanguages(); saveEntries();
                         if (languages.length) currentLangId = languages[0].id;
                         renderAll();
                         alert('Importación exitosa');
                     } else throw new Error('Formato inválido');
-                } catch (ex) { alert('Error al importar: ' + ex); }
+                } catch(ex) { alert('Error al importar: '+ex); }
             };
             reader.readAsText(file);
         };
-
         document.getElementById('fullCleanBtn').addEventListener('click', fullClean);
 
         loadData();
